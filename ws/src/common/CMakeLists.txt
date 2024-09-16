@@ -15,6 +15,7 @@ find_package(interfaces REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(pinocchio REQUIRED)
 
 if (ON_PI)
     set(WITHOUT_DRAKE ON)
@@ -28,6 +29,7 @@ if (NOT WITHOUT_DRAKE)
     add_library(quad_model src/quad_model.cpp src/quad_state.cpp)
 endif ()
 add_library(quad_model_symbolic src/quad_state.cpp src/quad_model_symbolic.cpp)
+add_library(quad_model_pino src/quad_model_pino.cpp src/quad_state.cpp)
 if (ROBOT_NAME STREQUAL "ulab")
     target_compile_definitions(quad_model_symbolic PUBLIC ROBOT_MODEL=ULAB)
     MESSAGE(NOTICE "Building for ulab quad")
@@ -42,13 +44,21 @@ if (NOT WITHOUT_DRAKE)
 endif ()
 ament_target_dependencies(quad_model_symbolic interfaces rclcpp)
 target_link_libraries(quad_model_symbolic Eigen3::Eigen)
-
+ament_target_dependencies(quad_model_pino interfaces rclcpp)
+target_link_libraries(quad_model_pino Eigen3::Eigen pinocchio)
 
 target_include_directories(
         quad_model_symbolic
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
+
+target_include_directories(
+        quad_model_pino
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
+
 
 if (NOT WITHOUT_DRAKE)
     target_include_directories(
@@ -61,6 +71,7 @@ if (NOT WITHOUT_DRAKE)
     ament_export_targets(quad_model HAS_LIBRARY_TARGET)
 endif ()
 ament_export_targets(quad_model_symbolic HAS_LIBRARY_TARGET)
+ament_export_targets(quad_model_pino HAS_LIBRARY_TARGET)
 
 install(DIRECTORY include/common DESTINATION include)
 
@@ -84,11 +95,20 @@ install(
         INCLUDES
         DESTINATION include)
 
+install(
+        TARGETS quad_model_pino
+        EXPORT quad_model_pino
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin
+        INCLUDES
+        DESTINATION include)
+
 if (NOT WITHOUT_DRAKE)
     add_executable(model_test src/tests/model_test.cpp)
 
     ament_target_dependencies(model_test interfaces drake rclcpp)
-    target_link_libraries(model_test Eigen3::Eigen quad_model_symbolic)
+    target_link_libraries(model_test Eigen3::Eigen quad_model_pino quad_model_symbolic)
     target_include_directories(
             model_test
             PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -106,7 +126,7 @@ install(PROGRAMS scripts/plot_trajectory_bagfile.py DESTINATION lib/${PROJECT_NA
 # Share #
 #########
 
-install(DIRECTORY include model launch DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY include model launch config DESTINATION share/${PROJECT_NAME})
 
 ament_package()
 

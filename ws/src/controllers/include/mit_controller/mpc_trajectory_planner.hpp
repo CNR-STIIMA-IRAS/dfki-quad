@@ -21,7 +21,14 @@ class MPCTrajectoryPlanner {
   void plan_desired_trajectory(GaitSequence &sequence, const Target &target);
   void set_sequence_mode(GaitSequence &sequence, const Target &target);
   void set_current_target(GaitSequence &sequence, const Target &target);
-
+  inline double get_min_foot_height() {
+    double min_foot_height = *std::min_element(foot_heights_.begin(), foot_heights_.end());
+    if (min_foot_height == std::numeric_limits<double>::max()) {
+      min_foot_height = 0;
+      std::cout << "foot height not yet calculated, robot might drop" << std::endl;
+    }
+    return min_foot_height;
+  }
   double dt_;
   const StateInterface &quad_state_;  // Automatically updates as its a reference
   const ModelInterface &quad_model_;

@@ -62,6 +62,8 @@ class KalmanFilter {
   void GetState(Eigen::Vector3d &position, Eigen::Quaterniond &orientation, Eigen::Vector3d &linear_velocity) const;
   void GetOrientation(Eigen::Quaterniond &orientation) const;
   void GetCovariances(Eigen::Matrix<double, 6, 6> &pose_covariance, Eigen::Matrix3d &linear_velocity_covariance);
+  [[nodiscard]] Eigen::Vector3d GetAccelerationBias() const;
+  [[nodiscard]] Eigen::Vector3d GetGyroscopeBias() const;
   void AdaptCovariances(const SequenceView<bool, ModelInterface::N_LEGS> &foot_contacts,
                         const SequenceView<const Eigen::Vector3d, ModelInterface::N_LEGS> &foot_positions,
                         const std::array<Eigen::Ref<Eigen::Vector3d>, ModelInterface::N_LEGS> &contact_forces_map);

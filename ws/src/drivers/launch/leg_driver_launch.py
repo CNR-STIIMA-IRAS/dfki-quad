@@ -13,24 +13,30 @@ def generate_launch_description():
         sim = True
         unitree = False
         config_file = "leg_param_sim.yaml"
+        common_config_file = "common_config_ulab.yaml"
     elif "sim:=go2" in sys.argv[4:] or "sim:=unitree" in sys.argv[4:]:
         sim = True
         unitree = True
         config_file = "leg_param_sim.yaml"
+        common_config_file = "common_config_go2.yaml"
     elif "real:=ulab" in sys.argv[4:]:
         sim = False
         unitree = False
         config_file = "leg_param_real_ulab.yaml"
+        common_config_file = "common_config_ulab.yaml"
     elif "real:=go2" in sys.argv[4:] or "real:=unitree" in sys.argv[4:]:
         sim = False
         unitree = True
         config_file = "leg_param_real_go2.yaml"
+        common_config_file = "common_config_go2.yaml"
     else:
         print("Please specify param 'sim' or 'real' and robot. E.g. 'sim:=ulab' or 'real:=go2'.")
         exit()
 
     pkg_drivers = get_package_share_directory("drivers")
     driver_config_path = os.path.join(pkg_drivers, "config", config_file)
+    pkg_common = get_package_share_directory("common")
+    common_config_path = os.path.join(pkg_common, "config", common_config_file)
 
     use_sim_time = LaunchConfiguration("use_sim_time", default=str(sim))
     declare_use_sim_time = DeclareLaunchArgument(
@@ -44,7 +50,7 @@ def generate_launch_description():
         package="drivers",
         name="leg_driver",
         executable="leg_driver",
-        parameters=[driver_config_path, {"use_sim_time": use_sim_time}],
+        parameters=[driver_config_path, common_config_path, {"use_sim_time": use_sim_time}],
         # prefix= ["sudo -E env \"LD_LIBRARY_PATH=$LD_LIBRARY_PATH\""],
         # remappings = [("/joint_states","/joint_states_hw")],
         shell=True,

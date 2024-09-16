@@ -5,20 +5,21 @@
 
 #include "common/custom_qos.hpp"
 #include "common/eigen_msg_conversions.hpp"
-#include "common/quad_model_symbolic.hpp"
+#include "common/quad_model_pino.hpp"
 #include "common/quad_state.hpp"
 #include "common/sequence_containers.hpp"
 #include "interfaces/msg/controller_info.hpp"
 #include "interfaces/msg/joint_cmd.hpp"
 #include "interfaces/msg/leg_cmd.hpp"
+#include "interfaces/msg/mpc_diagnostics.hpp"
 #include "interfaces/msg/position_sequence.hpp"
 #include "interfaces/msg/quad_control_target.hpp"
 #include "interfaces/msg/quad_model.hpp"
+#include "interfaces/msg/quad_model_debug.hpp"
 #include "interfaces/msg/quad_state.hpp"
 #include "interfaces/msg/vector_sequence.hpp"
 #include "interfaces/msg/wbc_return.hpp"
 #include "interfaces/msg/wbc_target.hpp"
-#include "interfaces/msg/mpc_diagnostics.hpp"
 #include "interfaces/srv/change_leg_driver_mode.hpp"
 #include "mit_controller/adaptive_gait_sequencer.hpp"
 #include "mit_controller/gait_sequence_to_msg.hpp"
@@ -32,6 +33,7 @@
 #include "mit_controller/swing_leg_controller_interface.hpp"
 #include "mit_controller/wbc_arc_opt.hpp"
 #include "mit_controller/wbc_interface.hpp"
+#include "model_adaptation/kf_model_adaptation.hpp"
 #include "model_adaptation/least_squares_model_adaptation.hpp"
 #include "model_adaptation/model_adaptation_interface.hpp"
 
@@ -95,6 +97,7 @@ class MITController : public rclcpp::Node {
   rclcpp::Publisher<interfaces::msg::WBCTarget>::SharedPtr wbc_target_publisher_;
   rclcpp::Publisher<interfaces::msg::GaitSequence>::SharedPtr gait_sequence_publisher_;
   rclcpp::Publisher<interfaces::msg::QuadModel>::SharedPtr quad_model_publisher_;
+  rclcpp::Publisher<interfaces::msg::QuadModelDebug>::SharedPtr quad_model_debug_publisher_;
   rclcpp::Publisher<interfaces::msg::ControllerInfo>::SharedPtr controller_heartbeat_publisher_;
 
   std::shared_ptr<rclcpp::node_interfaces::OnSetParametersCallbackHandle> on_setparam_callback_handler_;
@@ -144,9 +147,10 @@ class MITController : public rclcpp::Node {
   // State and model
   bool first_quad_state_received_;
   QuadState quad_state_;
-  QuadModelSymbolic quad_model_;
+  QuadModelPino quad_model_;
 
-  std::unique_ptr<GaitSequencerInterface> GetGaitSequencerFromParams() const;
+  std::unique_ptr<GaitSequencerInterface> GetGaitSequencerFromParams(std::unique_ptr<ModelInterface> model,
+                                                                     std::unique_ptr<StateInterface> state) const;
 
  public:
   MITController(const std::string& nodeName);

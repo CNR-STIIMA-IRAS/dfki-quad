@@ -1,8 +1,8 @@
 #include "state_estimation_node.hpp"
 
-StateEstimationNode::StateEstimationNode(std::shared_ptr<ModelInterface> &quadModel)
+StateEstimationNode::StateEstimationNode()
     : rclcpp::Node("state_estimation_node"),
-      quad_model_(quadModel),
+      quad_model_(std::make_shared<QuadModelPino>(*this)),
       last_angular_velocity_(Eigen::Vector3d ::Zero()),
       joint_vel_filter_(FILTER_WINDOW),
       joint_acc_filter_(FILTER_WINDOW),
@@ -88,7 +88,7 @@ StateEstimationNode::StateEstimationNode(std::shared_ptr<ModelInterface> &quadMo
   assert(this->get_parameter("contact_detection.force_threshold").as_double_array().size() == ModelInterface::N_LEGS);
 
   contact_detection_ = new ContactDetection(
-      quadModel,
+      quad_model_,
       to_array<ModelInterface::N_LEGS>(this->get_parameter("contact_detection.force_threshold").as_double_array()),
       this->get_parameter("contact_detection.energy_obs_kd").as_double(),
       this->get_parameter("contact_detection.energy_obs_threshold").as_double(),
@@ -218,6 +218,10 @@ void StateEstimationNode::JointStatesCallback(const interfaces::msg::JointState 
     } else {
       contact_detection_->GetContacts(quad_state_msg_.foot_contact, contact_forces_map, unused);
     }
+    Eigen::Quaterniond orientation(1.0, 0.0, 0.0, 0.0);
+    if (kalman_filter_ != nullptr) {
+      kalman_filter_->GetOrientation(orientation);
+    }
 
     bool no_foot_contact = true;
     for (unsigned int i = 0; i < ModelInterface::N_LEGS; i++) {
@@ -225,6 +229,7 @@ void StateEstimationNode::JointStatesCallback(const interfaces::msg::JointState 
         no_foot_contact = false;
         break;
       }
+      contact_forces_map[i] = (orientation * contact_forces_map[i]).eval();
     }
     // Detect belly in contact
     quad_state_msg_.belly_contact =
@@ -240,22 +245,22 @@ void StateEstimationNode::JointStatesCallback(const interfaces::msg::JointState 
 
     std::array<const Eigen::Vector3d, ModelInterface::N_LEGS> feet_positions{
         (quad_model_->GetBodyToIMU().inverse()
-         * quad_model_->GetFootPositionInBodyFrame(
+         * quad_model_->CalcFootPositionInBodyFrame(
              0,
              Eigen::Map<const Eigen::Vector3d>(quad_state_msg_.joint_state.position.data()
                                                + 0 * ModelInterface::N_JOINTS_PER_LEG))),
         (quad_model_->GetBodyToIMU().inverse()
-         * quad_model_->GetFootPositionInBodyFrame(
+         * quad_model_->CalcFootPositionInBodyFrame(
              1,
              Eigen::Map<const Eigen::Vector3d>(quad_state_msg_.joint_state.position.data()
                                                + 1 * ModelInterface::N_JOINTS_PER_LEG))),
         (quad_model_->GetBodyToIMU().inverse()
-         * quad_model_->GetFootPositionInBodyFrame(
+         * quad_model_->CalcFootPositionInBodyFrame(
              2,
              Eigen::Map<const Eigen::Vector3d>(quad_state_msg_.joint_state.position.data()
                                                + 2 * ModelInterface::N_JOINTS_PER_LEG))),
         (quad_model_->GetBodyToIMU().inverse()
-         * quad_model_->GetFootPositionInBodyFrame(
+         * quad_model_->CalcFootPositionInBodyFrame(
              3,
              Eigen::Map<const Eigen::Vector3d>(quad_state_msg_.joint_state.position.data()
                                                + 3 * ModelInterface::N_JOINTS_PER_LEG))),
@@ -355,12 +360,6 @@ void StateEstimationNode::ImuCallback(const sensor_msgs::msg::Imu &imu_msg) {
       QuadState::TimePoint::duration(imu_msg.header.stamp.nanosec)
       + std::chrono::duration_cast<QuadState::TimePoint::duration>(std::chrono::seconds(imu_msg.header.stamp.sec)));
 
-  auto filtered_ang_vel =
-      angular_vel_filter_.update({imu_msg.angular_velocity.x, imu_msg.angular_velocity.y, imu_msg.angular_velocity.z});
-  auto filtered_linear_acc = linear_acc_filter_.update(
-      {imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z});
-  auto ang_acc = (filtered_ang_vel - last_angular_velocity_)
-                 / std::chrono::duration_cast<std::chrono::duration<double>>(current_imu_time - last_imu_time_).count();
   if (kalman_filter_ == nullptr) {
     RCLCPP_INFO(this->get_logger(),
                 "Received first imu message, kalman filter needs joint state as well to initialize");
@@ -372,6 +371,18 @@ void StateEstimationNode::ImuCallback(const sensor_msgs::msg::Imu &imu_msg) {
     // if kalman filter is running we have an orientation and can properly orient all the stuff
     Eigen::Quaterniond orientation;
     kalman_filter_->GetOrientation(orientation);
+    auto angular_vel_bias = kalman_filter_->GetGyroscopeBias();
+    auto filtered_ang_vel = angular_vel_filter_.update({imu_msg.angular_velocity.x - angular_vel_bias.x(),
+                                                        imu_msg.angular_velocity.y - angular_vel_bias.y(),
+                                                        imu_msg.angular_velocity.z - angular_vel_bias.z()});
+    auto acceleration_bias = kalman_filter_->GetAccelerationBias();
+    auto filtered_linear_acc = linear_acc_filter_.update({imu_msg.linear_acceleration.x - acceleration_bias.x(),
+                                                          imu_msg.linear_acceleration.y - acceleration_bias.y(),
+                                                          imu_msg.linear_acceleration.z - acceleration_bias.z()});
+    auto ang_acc =
+        (filtered_ang_vel - last_angular_velocity_)
+        / std::chrono::duration_cast<std::chrono::duration<double>>(current_imu_time - last_imu_time_).count();
+
     if (kalman_params_.imu_measures_g_ == true) {
       Eigen::Vector3d linear_acc = orientation * filtered_linear_acc;
       linear_acc.z() -= quad_model_->GetG();
@@ -385,9 +396,9 @@ void StateEstimationNode::ImuCallback(const sensor_msgs::msg::Imu &imu_msg) {
     orientation_der.coeffs() = 0.5 * orientation_der.coeffs();  // derivative of orientation quaternion
     eigenToRosMsg(orientation_der * ang_acc, quad_state_msg_.acceleration.angular);
     eigenToRosMsg(orientation * filtered_ang_vel, quad_state_msg_.twist.twist.angular);
+    last_angular_velocity_ = filtered_ang_vel;
+    last_imu_time_ = current_imu_time;
   }
-  last_angular_velocity_ = filtered_ang_vel;
-  last_imu_time_ = current_imu_time;
 }
 
 #ifdef WITH_VICON
@@ -493,8 +504,7 @@ void StateEstimationNode::GaitStateCallback(const interfaces::msg::GaitState &ga
 
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
-  std::shared_ptr<ModelInterface> quad_model = std::make_shared<QuadModelSymbolic>();
-  auto node = std::make_shared<StateEstimationNode>(quad_model);
+  auto node = std::make_shared<StateEstimationNode>();
   rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;

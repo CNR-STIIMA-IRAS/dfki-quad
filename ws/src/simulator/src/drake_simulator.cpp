@@ -2,6 +2,7 @@
 
 #include <drake/multibody/plant/externally_applied_spatial_force.h>
 
+#include <cmath>
 #include <common/sequence_containers.hpp>
 #include <iostream>
 
@@ -45,7 +46,8 @@ DrakeSimulator::DrakeSimulator() : restart_sim_(true) {
                                                  1.2823981046676636,
                                                  -2.7017698287963867});
   node_->declare_parameter<double>("visualisation_update_rate", 0.05);
-
+  node_->declare_parameter<std::vector<double>>("imu_noise", {0.0, 0.0});
+  node_->declare_parameter<std::vector<double>>("joint_noise", {0.0, 0.0, 0.0, 0.0});
   bool respect_effort_limits = node_->get_parameter("respect_effort_limits").as_bool();
   // rate of the simulator
   auto sim_rate = (1. / node_->get_parameter("simulator_discretization_frequency").as_double());
@@ -190,6 +192,10 @@ DrakeSimulator::DrakeSimulator() : restart_sim_(true) {
       });
   // Adding the IMU publisher
   int imu_link_idx = plant_->GetBodyByName(node_->get_parameter("imu_link").as_string()).index();
+  auto imu_noise = node_->get_parameter("imu_noise").as_double_array();
+
+  angular_vel_distr_ = std::normal_distribution<double>(0.0, imu_noise[0]);
+  linear_acc_distr_ = std::normal_distribution<double>(0.0, imu_noise[1]);
   imu_pub_ = builder_->AddSystem<ROSPub<sensor_msgs::msg::Imu,
                                         0,
                                         std::vector<drake::math::RigidTransformd>,
@@ -200,20 +206,28 @@ DrakeSimulator::DrakeSimulator() : restart_sim_(true) {
       "imu_measurement",
       QOS_RELIABLE_NO_DEPTH,
       std::array<int, 0>{},
-      [imu_link_idx](const std::array<Eigen::VectorXd, 0> &port_value,
-                     const std::array<const drake::AbstractValue *, 3> &abstract_port_value,
-                     const drake::systems::Context<double> &context,
-                     sensor_msgs::msg::Imu &ros_msg) {
+      [imu_link_idx, this](const std::array<Eigen::VectorXd, 0> &port_value,
+                           const std::array<const drake::AbstractValue *, 3> &abstract_port_value,
+                           const drake::systems::Context<double> &context,
+                           sensor_msgs::msg::Imu &ros_msg) {
         (void)port_value;  // Unused because no vector input
         ros_msg.header.stamp = ROSPub<sensor_msgs::msg::Imu, 1>::GetRosTime(context);
+
         auto pose = abstract_port_value[0]->get_value<std::vector<drake::math::RigidTransformd>>()[imu_link_idx];
+
+        auto angular_vel_noise = angular_vel_distr_(gen_);
+
         auto spatial_vel =
             abstract_port_value[1]->get_value<std::vector<drake::multibody::SpatialVelocity<double>>>()[imu_link_idx];
+        auto rotational_vel = (spatial_vel.rotational().array() + angular_vel_noise).matrix();
+
+        auto linear_acc_noise = linear_acc_distr_(gen_);
         auto spatial_acc = abstract_port_value[2]
                                ->get_value<std::vector<drake::multibody::SpatialAcceleration<double>>>()[imu_link_idx];
+        auto linear_acc = (spatial_acc.translational().array() + linear_acc_noise).matrix();
 
-        auto ang_vel_unrot = pose.rotation().inverse() * spatial_vel.rotational();
-        auto lin_acc_unrot = pose.rotation().inverse() * spatial_acc.translational();
+        auto ang_vel_unrot = pose.rotation().inverse() * rotational_vel;
+        auto lin_acc_unrot = pose.rotation().inverse() * linear_acc;
 
         ros_msg.orientation.w = pose.rotation().ToQuaternion().w();
         ros_msg.orientation.x = pose.rotation().ToQuaternion().x();
@@ -227,24 +241,42 @@ DrakeSimulator::DrakeSimulator() : restart_sim_(true) {
         ros_msg.linear_acceleration.z = lin_acc_unrot.z();
       });
   // Adding the joint state publisher
+  auto joint_noise = node_->get_parameter("joint_noise").as_double_array();
+  joint_position_distr_ = std::normal_distribution<double>(0.0, joint_noise[0]);
+  joint_velocity_distr_ = std::normal_distribution<double>(0.0, joint_noise[1]);
+  joint_effort_distr_ = std::normal_distribution<double>(0.0, joint_noise[2]);
+  joint_accel_distr_ = std::normal_distribution<double>(0.0, joint_noise[3]);
   joint_state_pub_ = builder_->AddSystem<ROSPub<interfaces::msg::JointState, 3>>(
       1. / node_->get_parameter("joint_state_publish_frequency").as_double(),
       *node_,
       "joint_states",
       QOS_RELIABLE_NO_DEPTH,
       std::array<int, 3>{37, 12, 18},
-      [](const std::array<Eigen::VectorXd, 3> &port_value,
-         const drake::systems::Context<double> &context,
-         interfaces::msg::JointState &ros_msg) {
+      [this](const std::array<Eigen::VectorXd, 3> &port_value,
+             const drake::systems::Context<double> &context,
+             interfaces::msg::JointState &ros_msg) {
         ros_msg.header.stamp = ROSPub<sensor_msgs::msg::Imu, 2>::GetRosTime(context);
 
-        Eigen::Vector<double, 12>::Map(ros_msg.position.data()) = port_value[0](Eigen::seqN(7, 12));
+        Eigen::Vector<double, 12> position = port_value[0](Eigen::seqN(7, 12));
+        auto joint_position_noise = joint_position_distr_(gen_);
 
-        Eigen::Vector<double, 12>::Map(ros_msg.velocity.data()) = port_value[0](Eigen::seqN(25, 12));
+        position = (position.array() + joint_position_noise).eval().matrix();
+        Eigen::Vector<double, 12>::Map(ros_msg.position.data()) = position;
 
-        Eigen::Vector<double, 12>::Map(ros_msg.effort.data()) = port_value[1](Eigen::seqN(0, 12));
+        Eigen::Vector<double, 12> velocity = port_value[0](Eigen::seqN(25, 12));
+        auto joint_velocity_noise = joint_velocity_distr_(gen_);
+        velocity = (velocity.array() + joint_velocity_noise).eval().matrix();
+        Eigen::Vector<double, 12>::Map(ros_msg.velocity.data()) = velocity;
 
-        Eigen::Vector<double, 12>::Map(ros_msg.acceleration.data()) = port_value[2](Eigen::seqN(6, 12));
+        Eigen::Vector<double, 12> effort = port_value[1](Eigen::seqN(0, 12));
+        auto joint_effort_noise = joint_effort_distr_(gen_);
+        effort = (effort.array() + joint_effort_noise).eval().matrix();
+        Eigen::Vector<double, 12>::Map(ros_msg.effort.data()) = effort;
+
+        Eigen::Vector<double, 12> acc = port_value[2](Eigen::seqN(6, 12));
+        auto joint_acc_noise = joint_accel_distr_(gen_);
+        acc = (acc.array() + joint_acc_noise).eval().matrix();
+        Eigen::Vector<double, 12>::Map(ros_msg.acceleration.data()) = acc;
       });
   // Adding the clock publisher
   clock_pub_ = builder_->AddSystem<ROSPub<rosgraph_msgs::msg::Clock, 0>>(

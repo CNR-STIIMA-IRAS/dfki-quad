@@ -71,7 +71,7 @@ void SwingLegController::UpdateGaitSequence(const GaitSequence &gs) {
     // Now update the respective swing_trajectories accordingly
     // Initial positions
     if (leg_states_[leg_idx] == NOT_STARTED) {  // Set to current positions
-      swing_trajectories_[leg_idx].setInitialPosition(quad_model_->GetFootPositionInWorld(leg_idx, *quad_state_));
+      swing_trajectories_[leg_idx].setInitialPosition(quad_model_->CalcFootPositionInWorld(leg_idx, *quad_state_));
     } else if (leg_states_[leg_idx] == STANCE) {  // Schedule for next phase
       swing_trajectories_[leg_idx].setInitialPosition(gs.foot_position_sequence[start_idx - 1][leg_idx]);
     }
@@ -163,7 +163,7 @@ void SwingLegController::UpdateState(const StateInterface &state) {
   for (unsigned int leg_idx = 0; leg_idx < N_LEGS; leg_idx++) {
     updateProgress(leg_idx);
     if (leg_states_[leg_idx] == NOT_STARTED) {
-      swing_trajectories_[leg_idx].setInitialPosition(quad_model_->GetFootPositionInWorld(leg_idx, state));
+      swing_trajectories_[leg_idx].setInitialPosition(quad_model_->CalcFootPositionInWorld(leg_idx, state));
     }
   }
 }

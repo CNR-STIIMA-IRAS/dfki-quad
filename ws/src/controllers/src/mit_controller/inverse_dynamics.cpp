@@ -52,7 +52,7 @@ WBCReturn InverseDynamics::GetJointCommand(CartesianCommands& joint_command) {
         q(i) = q_array[i];
       }
       // foot position in body frame
-      Eigen::Vector3d p_be = quad_model_->GetFootPositionInBodyFrame(leg_idx, q);
+      Eigen::Vector3d p_be = quad_model_->CalcFootPositionInBodyFrame(leg_idx, q);
 
       Eigen::Vector3d v_bw = -(body_velocity_filter_.get() * (1.0 - target_velocity_blend_)
                                + target_linear_velocity_ * target_velocity_blend_);

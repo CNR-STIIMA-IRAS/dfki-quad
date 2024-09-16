@@ -9,9 +9,9 @@
 #include <wbc/robot_models/pinocchio/RobotModelPinocchio.hpp>
 #include <wbc/scenes/acceleration_reduced_tsid/AccelerationSceneReducedTSID.hpp>
 #include <wbc/scenes/acceleration_tsid/AccelerationSceneTSID.hpp>
-#include <wbc/tasks/CartesianAccelerationTask.hpp>
 #include <wbc/tasks/CoMAccelerationTask.hpp>
-#include <wbc/tasks/WrenchForwardTask.hpp>
+#include <wbc/tasks/ContactForceTask.hpp>
+#include <wbc/tasks/SpatialAccelerationTask.hpp>
 #include <wbc/tools/JointIntegrator.hpp>
 #include <wbc/types/JointCommand.hpp>
 #include <wbc/types/JointState.hpp>
@@ -38,12 +38,12 @@ class WBCArcOPT : public WBCInterface<JointTorqueVelocityPositionCommands> {
   wbc::types::JointCommand joint_cmd_;
 
   // WBC Tasks
-  wbc::CartesianAccelerationTaskPtr wbc_com_task_;
-  std::array<wbc::WrenchForwardTaskPtr, ModelInterface::N_LEGS> wbc_foot_contact_tasks_;
-  std::array<wbc::CartesianAccelerationTaskPtr, ModelInterface::N_LEGS> wbc_foot_pose_tasks_;
+  wbc::SpatialAccelerationTaskPtr wbc_com_task_;
+  std::array<wbc::ContactForceTaskPtr, ModelInterface::N_LEGS> wbc_foot_contact_tasks_;
+  std::array<wbc::SpatialAccelerationTaskPtr, ModelInterface::N_LEGS> wbc_foot_pose_tasks_;
 
   // WBC states
-  std::vector<wbc::Contact> active_foot_contacts_;
+  std::vector<wbc::types::Contact> active_foot_contacts_;
   wbc::types::RigidBodyState floating_base_state_;
   wbc::types::JointState joint_state_;
 
@@ -75,8 +75,7 @@ class WBCArcOPT : public WBCInterface<JointTorqueVelocityPositionCommands> {
             const Eigen::Matrix<double, 3, 1>& feet_pose_d_gain,
             const Eigen::Matrix<double, 6, 1>& com_pose_saturation,
             const Eigen::Matrix<double, 3, 1>& feet_pose_saturation,
-            double solver_tolerances
-          );
+            double solver_tolerances);
 
   void UpdateState(const StateInterface& quad_state) override;
   void UpdateModel(const ModelInterface& quad_model) override;

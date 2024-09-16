@@ -25,6 +25,8 @@ class StateInterface {
   virtual const std::array<std::array<double, NUM_JOINT_PER_FOOT>, NUM_FEET> &GetJointVelocities() const = 0;
   virtual const std::array<std::array<double, NUM_JOINT_PER_FOOT>, NUM_FEET> &GetJointAccelerations() const = 0;
   virtual const std::array<std::array<double, NUM_JOINT_PER_FOOT>, NUM_FEET> &GetJointTorques() const = 0;
+  virtual void SetVelocitiesToZero() = 0;
+  virtual void SetAccelerationsToZero() = 0;
 
   virtual ~StateInterface(){};
   virtual StateInterface &operator=(const StateInterface &other) {

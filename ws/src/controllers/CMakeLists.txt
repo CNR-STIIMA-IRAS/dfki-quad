@@ -144,6 +144,7 @@ if (NOT WITHOUT_DRAKE)
             src/potato_sim/potato_model.cpp
             src/SwingTrajectory.cpp
             src/model_adaptation/least_squares_model_adaptation.cpp
+            src/model_adaptation/kf_model_adaptation.cpp
     )
 
     ament_target_dependencies(mitcontroller Eigen3 interfaces common drake simulator)
@@ -177,6 +178,7 @@ add_executable(mitcontrollernode
         src/mit_controller/inverse_dynamics.cpp
         src/mit_controller/wbc_arc_opt.cpp
         src/model_adaptation/least_squares_model_adaptation.cpp
+        src/model_adaptation/kf_model_adaptation.cpp
         src/SwingTrajectory.cpp
 )
 

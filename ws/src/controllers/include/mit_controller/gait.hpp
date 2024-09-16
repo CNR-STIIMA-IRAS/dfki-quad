@@ -126,6 +126,7 @@ class AdaptiveGait : public GaitInterface {
                unsigned int filter_size,
                double zero_velocity_threshold,
                bool switch_offsets,
+               const std::array<double, 2>& gait_change_froude,
                double standing_foot_position_threshold,
                double min_v_cmd_factor,
                double max_correction_cycles,
@@ -176,6 +177,7 @@ class AdaptiveGait : public GaitInterface {
   void set_min_v(double v);
   void set_offset_delay(double delay);
   void set_max_stride_length(double stride_length);
+  void set_gait_change_froude(const std::array<double, 2>& gait_change_froude);
 
  protected:
   static constexpr double GRAVITY_CONSTANT = 9.8067;
@@ -200,6 +202,7 @@ class AdaptiveGait : public GaitInterface {
   MovingAverage<Eigen::Vector2d> velocity_filter_;
   double zero_velocity_threshold_;
   bool switch_offsets_;
+  std::array<double, 2> gait_change_froude_;
   double offset_delay_;
   double remaining_offset_delay_;
   double standing_foot_position_threshold_;

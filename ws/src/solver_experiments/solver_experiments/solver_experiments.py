@@ -481,11 +481,11 @@ class SolverExperiments(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    
+
     solver_experiments_node = SolverExperiments("src/solver_experiments/results")
     solver_experiments_node.declare_parameter("mpc_prediction_horizon", 20)
     solver_experiments_node.declare_parameter("test_preset", "")
-    
+
     # Main script
     def run_func():
         executor = rclpy.executors.MultiThreadedExecutor(2)
@@ -645,7 +645,7 @@ def main(args=None):
     max_trials = 3
 
     preset = solver_experiments_node.get_parameter("test_preset").get_parameter_value().string_value
-    
+
     if preset == 'mpc':
         wbc_solvers = [wbc_solvers[0]]
         wbc_scenes = [wbc_scenes[0]]
@@ -662,7 +662,7 @@ def main(args=None):
         wbc_solvers = [wbc_solvers[0]]
         wbc_scenes = [wbc_scenes[0]]
         mpc_solvers = ["PARTIAL_CONDENSING_OSQP"]
-        
+
     for mpc_solver in mpc_solvers:
         if not mpc_solver.__contains__("PARTIAL"):
             mpc_condensed_sizes_f = [1]
@@ -676,9 +676,9 @@ def main(args=None):
             mpc_osqp_linsys_modes_f = ["xxxxx"]
         else:
             mpc_osqp_linsys_modes_f = mpc_osqp_linsys_modes
-            
-        
-        for solver_tolerance in solver_tolerances:    
+
+
+        for solver_tolerance in solver_tolerances:
             for mpc_osqp_linsys_mode in mpc_osqp_linsys_modes_f:
                 for mpc_hpipm_mode in mpc_hpipm_modes_f:
                     for mpc_condensed_size in mpc_condensed_sizes_f:
@@ -709,7 +709,7 @@ def main(args=None):
                                             + "-"
                                             + str(solver_tolerance)
                                         )
-                                        
+
                                         success = solver_experiments_node.run_experiment(
                                             mpc_solver,
                                             mpc_hpipm_mode,

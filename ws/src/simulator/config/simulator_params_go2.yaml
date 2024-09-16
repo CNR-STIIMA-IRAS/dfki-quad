@@ -25,3 +25,5 @@ drake_simulator:
     manually_step_sim: false                        # If enabled, the simulation ignores the simulator_realtime_rate and the simulation pauses. Instead, a service /step_sim provides manual stepping
     initial_robot_height: 0.4                      # Spawn height of the robot
     initial_joint_positions: [ 0.126, 0.61, -1.22, -0.126, 0.61, -1.22, 0.126, 0.61, -1.22, -0.126, 0.61, -1.22 ]
+    imu_noise: [0.0, 0.0]                       #stddev of noise added to simulated imu data [angular velocity, linear acceleration] ATTENTION: THIS DOES NOT APPEAR IN QUADSTATE MESSAGE
+    joint_noise: [0.0, 0.0, 0.0, 0.0]             #stddev of noise added to simulated joint data [position, velocity, effort, acceleration] ATTENTION: THIS DOES NOT APPEAR IN QUADSTATE MESSAGE

@@ -215,12 +215,11 @@ void KalmanFilter::AdaptCovariances(
   }
 
   // Pass the adapted covariance to the filter
-  foot_step_measurement_std_ = sigma_r_adapted; 
+  foot_step_measurement_std_ = sigma_r_adapted;
 
   if (verbose) std::cout << "\033[1mcontact_forces_prev_ \033[0m " << std::endl << contact_forces_prev_ << std::endl;
   if (verbose) std::cout << "\033[1mdelta_f_z \033[0m " << std::endl << delta_f_z << std::endl;
-  if (verbose)
-    std::cout << "\033[1mstddev_foot_positions \033[0m " << std::endl << stddev_foot_positions << std::endl;
+  if (verbose) std::cout << "\033[1mstddev_foot_positions \033[0m " << std::endl << stddev_foot_positions << std::endl;
   if (verbose) std::cout << "\033[1mfoot_step_measurement_std_ \033[0m " << std::endl << sigma_0 << std::endl;
   if (verbose) std::cout << "\033[1msigma_r_adapted\033[0m " << std::endl << sigma_r_adapted << std::endl;
 
@@ -245,3 +244,7 @@ void KalmanFilter::ResetCovariances() {
       .fill(pow(params_.foot_step_measurement_std_, 2));
   current_state.setTheta(init_state_.getTheta());
 }
+
+Eigen::Vector3d KalmanFilter::GetAccelerationBias() const { return filter_.getState().getAccelerometerBias(); }
+
+Eigen::Vector3d KalmanFilter::GetGyroscopeBias() const { return filter_.getState().getGyroscopeBias(); }

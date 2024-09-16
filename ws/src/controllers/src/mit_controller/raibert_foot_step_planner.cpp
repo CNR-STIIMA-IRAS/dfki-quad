@@ -24,8 +24,8 @@ RaibertFootStepPlanner::RaibertFootStepPlanner(const std::array<const Eigen::Vec
       z_on_plane_(z_on_plane) {
   // initialize z height with min value of current foot heights
   for (int i = 0; i < N_LEGS; ++i) {
-    last_foot_heights_[i] = quad_model_.GetFootPositionInWorld(i, quad_state_).z();
-    last_foot_positions_[i] = quad_model_.GetFootPositionInWorld(i, quad_state_);
+    last_foot_heights_[i] = quad_model_.CalcFootPositionInWorld(i, quad_state_).z();
+    last_foot_positions_[i] = quad_model_.CalcFootPositionInWorld(i, quad_state_);
   }
   double min_z = *std::min_element(last_foot_heights_.begin(), last_foot_heights_.end());
   for (int i = 0; i < N_LEGS; ++i) {
@@ -36,7 +36,7 @@ RaibertFootStepPlanner::RaibertFootStepPlanner(const std::array<const Eigen::Vec
   Eigen::Matrix4d T;
   Eigen::Vector3d pos;
   Eigen::Vector3d q{0.0, 0.0, 0.0};
-  quad_model_.calcFwdKinLegBody(0, q, T, pos);
+  quad_model_.CalcFwdKinLegBody(0, q, T, pos);
   max_leg_length_ = -pos.z() - 0.02;
 };
 
@@ -73,7 +73,7 @@ void RaibertFootStepPlanner::get_foot_position_sequence(GaitSequence &gait_seque
       // if in contact
       if (gait_sequence.contact_sequence[i][leg]) {
         if (i == 0) {  // use current position
-          foot_position_sequence[i][leg] = quad_model_.GetFootPositionInWorld(leg, quad_state_);
+          foot_position_sequence[i][leg] = quad_model_.CalcFootPositionInWorld(leg, quad_state_);
           last_foot_heights_[leg] = foot_position_sequence[i][leg].z();
           last_foot_positions_[leg] = foot_position_sequence[i][leg];
         } else if (resume_contact[leg]) {  // use last position
@@ -169,7 +169,7 @@ Eigen::Vector3d RaibertFootStepPlanner::get_foothold(unsigned int leg,
 }
 
 Eigen::Vector3d RaibertFootStepPlanner::get_current_foot_position(unsigned int leg) const {
-  return quad_model_.GetFootPositionInWorld(leg, quad_state_);
+  return quad_model_.CalcFootPositionInWorld(leg, quad_state_);
 }
 
 void RaibertFootStepPlanner::set_z_to_plane(Eigen::Vector3d &pos) {

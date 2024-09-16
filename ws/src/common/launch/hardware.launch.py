@@ -20,6 +20,7 @@ def generate_launch_description():
         unitree = False
         config_file_leg_driver = "leg_param_real_ulab.yaml"
         config_file_state_estimation = "state_estimation_ulab.yaml"
+        common_config_file = "common_config_ulab.yaml"
         if "onboard:=true" not in sys.argv[5:]:
             config_file_viz = "visualizer_params_ulab.yaml"
 
@@ -28,6 +29,7 @@ def generate_launch_description():
         unitree = True
         config_file_leg_driver = "leg_param_real_go2.yaml"
         config_file_state_estimation = "state_estimation_go2_real.yaml"
+        common_config_file = "common_config_go2.yaml"
         if "onboard:=true" not in sys.argv[5:]:
             config_file_viz = "visualizer_params_go2.yaml"
     else:
@@ -38,6 +40,8 @@ def generate_launch_description():
     driver_config_path = os.path.join(pkg_drivers, "config", config_file_leg_driver)
     pkg_state_estimation = get_package_share_directory("state_estimation")
     state_estimation_config_path = os.path.join(pkg_state_estimation, "config", config_file_state_estimation)
+    pkg_common = get_package_share_directory("common")
+    common_config_path = os.path.join(pkg_common, "config", common_config_file)
 
     if "onboard:=true" not in sys.argv[5:]:
         pkg_simulator = get_package_share_directory("simulator")
@@ -74,7 +78,7 @@ def generate_launch_description():
         package="drivers",
         name="leg_driver",
         executable="leg_driver",
-        parameters=[driver_config_path, {"use_sim_time": use_sim_time}],
+        parameters=[driver_config_path, common_config_path, {"use_sim_time": use_sim_time}],
         shell=True,
         output="screen",
     )
@@ -83,7 +87,7 @@ def generate_launch_description():
         package="state_estimation",  # Replace with the actual package name
         executable="state_estimation",  # Replace with the executable name
         name="state_estimation_node",
-        parameters=[state_estimation_config_path, {"use_sim_time": use_sim_time}],
+        parameters=[state_estimation_config_path, common_config_path, {"use_sim_time": use_sim_time}],
         output='screen',
         arguments=['--ros-args', '--log-level', ["mit_controller_node:=", "info"]]
     )

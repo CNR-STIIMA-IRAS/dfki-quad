@@ -43,6 +43,9 @@ class BrickState : public StateInterface {
   const std::array<std::array<double, NUM_JOINT_PER_FOOT>, NUM_FEET> &GetJointAccelerations() const override;
   const std::array<std::array<double, NUM_JOINT_PER_FOOT>, NUM_FEET> &GetJointTorques() const override;
 
+  void SetVelocitiesToZero() override;
+  void SetAccelerationsToZero() override;
+
   StateInterface &operator=(const StateInterface &other) override;
 };
 
@@ -51,14 +54,21 @@ class BrickModel : public ModelInterface {
   Eigen::Matrix3d inertia_;
   double mass_;
   double g_;
+  Eigen::Vector<double, (1 + ModelInterface::NUM_JOINTS) * 10> zero_;
 
   BrickModel(const Eigen::Matrix3d &inertia, double mass);
-  Eigen::Vector3d GetFootPositionInWorld(unsigned int foot_idx, const StateInterface &state) const override;
+  Eigen::Vector3d CalcFootPositionInWorld(unsigned int foot_idx, const StateInterface &state) const override;
 
   Eigen::Matrix3d GetInertia() const override;
+  Eigen::Matrix3d getBaseInertia() const override;
+  void getLegInertia(
+      const std::array<Eigen::Vector<double, ModelInterface::N_JOINTS_PER_LEG>, ModelInterface::N_LEGS> &joint_pos,
+      Eigen::Ref<Eigen::Matrix3d> leg_inertia) const override;
   double GetInertia(const int row, const int column) const override;
 
   double GetMass() const override;
+  double GetLegMass(int foot_idx) const override;
+  double getBaseMass() const override;
 
   double GetG() const override;
   void SetInertia(const Eigen::Matrix3d &inertia_tensor) override;
@@ -83,31 +93,31 @@ class BrickModel : public ModelInterface {
       Eigen::Ref<Eigen::Vector3d> f_ee,
       Eigen::Ref<Eigen::Vector3d> v_ee) const override;
 
-  Eigen::Vector3d GetFootPositionInWorld(unsigned int foot_idx,
-                                         const Eigen::Vector3d &body_pos,
-                                         const Eigen::Quaterniond &body_orientation,
-                                         const Eigen::Vector3d &joint_positions) const override;
+  Eigen::Vector3d CalcFootPositionInWorld(unsigned int foot_idx,
+                                          const Eigen::Vector3d &body_pos,
+                                          const Eigen::Quaterniond &body_orientation,
+                                          const Eigen::Vector3d &joint_positions) const override;
 
-  Eigen::Vector3d GetFootPositionInBodyFrame(unsigned int foot_idx,
-                                             const Eigen::Vector3d &joint_positions) const override;
+  Eigen::Vector3d CalcFootPositionInBodyFrame(unsigned int foot_idx,
+                                              const Eigen::Vector3d &joint_positions) const override;
 
   Eigen::Translation3d GetBodyToIMU() const override;
-  void calcFootForceVelocityBodyFrame(int leg_index,
+  void CalcFootForceVelocityBodyFrame(int leg_index,
                                       const StateInterface &state,
                                       Eigen::Vector3d &f_ee,
                                       Eigen::Vector3d &v_ee) const override;
-  void calcLegInverseKinematicsInBody(int leg_index,
+  void CalcLegInverseKinematicsInBody(int leg_index,
                                       const Eigen::Vector3d &p_ee_B,
                                       const Eigen::Vector3d &joint_state_init_guess,
                                       Eigen::Vector3d &theta) const override;
-  void calcLegDiffKinematicsBodyFrame(int leg_index,
+  void CalcLegDiffKinematicsBodyFrame(int leg_index,
                                       const StateInterface &state,
                                       Eigen::Vector3d &f_ee_goal,
                                       Eigen::Vector3d &v_ee_goal,
                                       Eigen::Vector3d &tau_goal,
                                       Eigen::Vector3d &qd_goal) const override;
-  void calcJacobianLegBase(int leg_index, Eigen::Vector3d joint_pos, Eigen::Matrix3d &Jac_legBaseToFoot) const override;
-  void calcFwdKinLegBody(int leg_indx,
+  void CalcJacobianLegBase(int leg_index, Eigen::Vector3d joint_pos, Eigen::Matrix3d &Jac_legBaseToFoot) const override;
+  void CalcFwdKinLegBody(int leg_indx,
                          const Eigen::Vector3d &joint_pos,
                          Eigen::Matrix4d &T_BodyToFoot,
                          Eigen::Vector3d &foot_pos_body) const override;
@@ -127,5 +137,25 @@ class BrickModel : public ModelInterface {
   double ComputeEnergyDerivative(int leg_index,
                                  const Eigen::Vector3d &joint_vel,
                                  const Eigen::Vector3d &tau) const override;
+  void ComputeMomentumSignal(const StateInterface &state,
+                             Eigen::Vector<double, ModelInterface::NUM_JOINTS + 6> &momentum_signal) const override;
+  void ComputeGeneralizedMomentum(
+      const Eigen::Vector<double, ModelInterface::NUM_JOINTS + 7> &joint_pos,
+      const Eigen::Vector<double, ModelInterface::NUM_JOINTS + 6> &joint_vel,
+      Eigen::Vector<double, ModelInterface::NUM_JOINTS + 6> &generalized_momentum) const override;
+  void ComputeEstimatedForces(int leg_index,
+                              const Eigen::Vector<double, ModelInterface::N_JOINTS_PER_LEG> &tau_disturbed,
+                              const Eigen::Vector<double, ModelInterface::N_JOINTS_PER_LEG> &joint_pos,
+                              Eigen::Vector3d &estimated_forces) const override;
+  void ComputeRegressorMatrix(
+      const StateInterface &state,
+      Eigen::Matrix<double, ModelInterface::NUM_JOINTS + 6, (ModelInterface::NUM_JOINTS + 1) * 10> &regressor)
+      const override;
+
+  const Eigen::Vector<double, (1 + ModelInterface::NUM_JOINTS) * 10> &GetAllDynamicParameters();
+
   Eigen::Translation3d GetBodyToCOM() const override;
+  Eigen::Translation3d GetBodyToLegCOM(int foot_idx) const override;
+  Eigen::Translation3d GetBodyToLegBase(int foot_idx) const override;
+  Eigen::Vector3d getBaseCOM() const override;
 };

@@ -1,0 +1,18 @@
+/**:
+  ros__parameters:
+    model_urdf: "src/common/model/urdf/go2/urdf/go2_description.urdf"
+    model_feet_link_names: [ "fl_contact_frame", "fr_contact_frame", "bl_contact_frame", "br_contact_frame" ]
+    model_base_link_name: "base_link"
+    model_joint_names: [ "fl_abad",
+                         "fl_shoulder",
+                         "fl_knee",
+                         "fr_abad",
+                         "fr_shoulder",
+                         "fr_knee",
+                         "bl_abad",
+                         "bl_shoulder",
+                         "bl_knee",
+                         "br_abad",
+                         "br_shoulder",
+                         "br_knee" ]
+    model_joint_default_positions: [ -0.015, 0.774, -1.56, 0.0051, 0.767, -1.56, -0.015, 0.774, -1.56, 0.0051, 0.767, -1.56 ]

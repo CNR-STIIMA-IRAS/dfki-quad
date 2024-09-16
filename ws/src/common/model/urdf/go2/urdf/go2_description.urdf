@@ -1492,7 +1492,7 @@ Stephen Brawner (brawner@gmail.com)
         </inertial>
     </link>
     <joint
-            name="imu_joint"
+            name="joint_imu"
             type="fixed">
         <origin
                 xyz="-0.02557 0 0.04232"
@@ -1501,6 +1501,21 @@ Stephen Brawner (brawner@gmail.com)
                 link="base_link"/>
         <child
                 link="link_imu"/>
+        <axis
+                xyz="0 0 0"/>
+    </joint>
+
+    <link name="link_belly_bottom"/>
+    <joint
+            name="joint_belly_bottom"
+            type="fixed">
+        <origin
+                xyz="0 0 -0.06"
+                rpy="0 0 0"/>
+        <parent
+                link="base_link"/>
+        <child
+                link="link_belly_bottom"/>
         <axis
                 xyz="0 0 0"/>
     </joint>

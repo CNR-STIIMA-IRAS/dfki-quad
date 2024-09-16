@@ -25,8 +25,7 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
                      const Eigen::Matrix<double, 3, 1>& feet_pose_d_gain,
                      const Eigen::Matrix<double, 6, 1>& com_pose_saturation,
                      const Eigen::Matrix<double, 3, 1>& feet_pose_saturation,
-                     double solver_tolerances
-                    )
+                     double solver_tolerances)
     : quad_state_(std::move(state)),
       feet_names_(feet_names),
       wbc_robot_model_(std::make_shared<wbc::RobotModelPinocchio>()),
@@ -57,9 +56,9 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
   } else if (solver == "ProxQPSolver") {
     auto solver = std::make_shared<wbc::ProxQPSolver>();
     proxsuite::proxqp::Settings<double> solver_opts;
-    if (solver_tolerances >= 0.0){
-    solver_opts.eps_abs = solver_tolerances;
-    solver_opts.eps_duality_gap_abs = solver_tolerances;
+    if (solver_tolerances >= 0.0) {
+      solver_opts.eps_abs = solver_tolerances;
+      solver_opts.eps_duality_gap_abs = solver_tolerances;
     }
     solver->setOptions(solver_opts);
     wbc_solver_ = solver;
@@ -67,17 +66,17 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
     auto solver = std::make_shared<wbc::QPOASESSolver>();
     qpOASES::Options solver_opts;
     solver_opts.setToMPC();
-    if(solver_tolerances >= 0.0){
-    solver_opts.terminationTolerance = solver_tolerances;
+    if (solver_tolerances >= 0.0) {
+      solver_opts.terminationTolerance = solver_tolerances;
     }
     solver_opts.printLevel = qpOASES::PL_NONE;
     solver->setOptions(solver_opts);
     wbc_solver_ = solver;
   } else if (solver == "OSQPSolver") {
     auto solver = std::make_shared<wbc::OsqpSolver>();
-    if(solver_tolerances >= 0.0){
-    solver->solver.settings()->setAbsoluteTolerance(solver_tolerances);
-    solver->solver.settings()->setPrimalInfeasibilityTolerance(solver_tolerances);
+    if (solver_tolerances >= 0.0) {
+      solver->solver.settings()->setAbsoluteTolerance(solver_tolerances);
+      solver->solver.settings()->setPrimalInfeasibilityTolerance(solver_tolerances);
     }
     solver->solver.settings()->setVerbosity(false);
     wbc_solver_ = solver;
@@ -87,17 +86,16 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
   } else if (solver == "HPIPMSolver") {
     auto solver = std::make_shared<wbc::HPIPMSolver>();
     double tolerance = solver_tolerances;
-    if(solver_tolerances >= 0.0){
-    std::array<std::string, 4> fields = {"tol_dual_gap", "tol_eq", "tol_stat", "tol_comp"};
-    for(auto field : fields){
-      solver->setOptions(field, tolerance);
+    if (solver_tolerances >= 0.0) {
+      std::array<std::string, 4> fields = {"tol_dual_gap", "tol_eq", "tol_stat", "tol_comp"};
+      for (auto field : fields) {
+        solver->setOptions(field, &tolerance);
+      }
     }
-  }
     wbc_solver_ = solver;
   } else {
     throw std::runtime_error(fmt::format("Unknown wbc solver {0}", solver));
   }
-
 
   // Setup scene
   if (scene == "AccelerationSceneReducedTSID") {
@@ -112,7 +110,7 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
   // Configure tasks
   std::vector<wbc::TaskPtr> wbc_tasks;
 #ifdef COM_TASK
-  wbc_com_task_ = std::make_shared<wbc::CartesianAccelerationTask>(
+  wbc_com_task_ = std::make_shared<wbc::SpatialAccelerationTask>(
       wbc::TaskConfig("body_pose",
                       0,
                       to_vector(com_pose_weight),  // vector: xyz, roll pitch yaw
@@ -130,19 +128,19 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
   for (unsigned int feet_idx = 0; feet_idx < ModelInterface::N_LEGS; feet_idx++) {
 #ifdef FEET_FORCE_TASK
     wbc_foot_contact_tasks_[feet_idx] =
-        std::make_shared<wbc::WrenchForwardTask>(wbc::TaskConfig(fmt::format("foot_contact_{}", feet_idx),
-                                                                 0,
-                                                                 to_vector(foot_force_weight),  // 6: force, torque
-                                                                 quad_state_->GetFeetContacts()[feet_idx]),
-                                                 wbc_robot_model_,
-                                                 "world");
+        std::make_shared<wbc::ContactForceTask>(wbc::TaskConfig(fmt::format("foot_contact_{}", feet_idx),
+                                                                0,
+                                                                to_vector(foot_force_weight),  // 6: force, torque
+                                                                quad_state_->GetFeetContacts()[feet_idx]),
+                                                wbc_robot_model_,
+                                                "world");
     wbc_tasks.push_back(wbc_foot_contact_tasks_[feet_idx]);
 #else
     std::cout << "FEET_FORCE_TASK is deactivated" << std::endl;
     (void)foot_force_weight;
 #endif
 #ifdef FEET_POS_TASK
-    wbc_foot_pose_tasks_[feet_idx] = std::make_shared<wbc::CartesianAccelerationTask>(
+    wbc_foot_pose_tasks_[feet_idx] = std::make_shared<wbc::SpatialAccelerationTask>(
         wbc::TaskConfig(fmt::format("foot_pose_{}", feet_idx),
                         0,
                         to_vector(stack(foot_pose_weight, Eigen::Vector3d::Zero().eval())),  // 6 dof vector
@@ -280,8 +278,15 @@ void WBCArcOPT::UpdateState(const StateInterface& quad_state) {
 }
 
 void WBCArcOPT::UpdateModel(const ModelInterface& quad_model) {
-  (void)quad_model;
-  throw std::logic_error("WBCArcOPT::UpdateModel is not yet implemented");
+  pinocchio::Model* wbc_model_temp =
+      std::static_pointer_cast<wbc::RobotModelPinocchio>(wbc_robot_model_)->getInternalModel();
+  uint idx = wbc_model_temp->getFrameId("base_link");
+  assert(idx != wbc_model_temp->frames.size());
+
+  wbc_model_temp->inertias[wbc_model_temp->frames[idx].parent].mass() = quad_model.getBaseMass();
+  wbc_model_temp->inertias[wbc_model_temp->frames[idx].parent].lever() = quad_model.getBaseCOM();
+  wbc_model_temp->inertias[wbc_model_temp->frames[idx].parent].inertia() =
+      pinocchio::Symmetric3(quad_model.getBaseInertia());
 }
 
 WBCReturn WBCArcOPT::GetJointCommand(JointTorqueVelocityPositionCommands& joint_command) {

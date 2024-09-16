@@ -9,6 +9,7 @@
 
 LegDriver::LegDriver()
     : Node("leg_driver"),
+      quad_model_(*this),
       quad_state_received_(false),
       first_message_received_(false),
       state_(INIT_WAIT),
@@ -117,8 +118,8 @@ void LegDriver::do_control() {
 
           q_init_guess << quad_state_.GetJointPositions()[leg][0], quad_state_.GetJointPositions()[leg][1],
               quad_state_.GetJointPositions()[leg][2];
-          quad_model_.calcLegInverseKinematicsInBody(leg, x_d, q_init_guess, q_d);
-          quad_model_.calcLegDiffKinematicsBodyFrame(leg, quad_state_, f_d, v_d, tau, qd_d);
+          quad_model_.CalcLegInverseKinematicsInBody(leg, x_d, q_init_guess, q_d);
+          quad_model_.CalcLegDiffKinematicsBodyFrame(leg, quad_state_, f_d, v_d, tau, qd_d);
 
           for (unsigned int j = 0; j < ModelInterface::N_JOINTS_PER_LEG; j++) {
             tau[j] = std::max(-torque_limit_, std::min(torque_limit_, tau[j]));
@@ -153,16 +154,16 @@ void LegDriver::do_control() {
               leg_cmd_.kd[leg * ModelInterface::N_JOINTS_PER_LEG + 1],
               leg_cmd_.kd[leg * ModelInterface::N_JOINTS_PER_LEG + 2];
 
-          quad_model_.calcJacobianLegBase(
+          quad_model_.CalcJacobianLegBase(
               leg, Eigen::Map<const Eigen::Vector3d>(quad_state_.GetJointPositions()[leg].data()), J);  // Should not
           // metter here if it is not
           // body frame as the Jacobian
           // maps to a velocity
           Eigen::Matrix4d unused;
-          quad_model_.calcFwdKinLegBody(
+          quad_model_.CalcFwdKinLegBody(
               leg, Eigen::Map<const Eigen::Vector3d>(quad_state_.GetJointPositions()[leg].data()), unused, x_e);
 
-          quad_model_.calcFootForceVelocityBodyFrame(leg, quad_state_, f_e, v_e);
+          quad_model_.CalcFootForceVelocityBodyFrame(leg, quad_state_, f_e, v_e);
 
           x_d[0] = leg_cmd_.ee_pos[leg * 3 + 0];
           x_d[1] = leg_cmd_.ee_pos[leg * 3 + 1];

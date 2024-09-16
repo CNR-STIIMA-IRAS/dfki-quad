@@ -1,6 +1,7 @@
 #pragma once
 
-#include <memory>  // for the smart pointers
+#include <algorithm>  // for some array functions
+#include <memory>     // for the smart pointers
 
 #include "common/filters.hpp"
 #include "model_adaptation_interface.hpp"
@@ -9,33 +10,34 @@ class LeastSquaresModelAdaptation : public ModelAdaptationInterface {
  public:
   LeastSquaresModelAdaptation(std::unique_ptr<ModelInterface> quad_model,
                               std::unique_ptr<StateInterface> initial_state,
-                              int buffer_size,
-                              Eigen::DiagonalMatrix<double, 10> Gamma,
+                              const Eigen::Ref<const Eigen::Vector<double, NUM_PARAMS>> CONV_THRESH,
                               double lambda);
   void UpdateState(const StateInterface& state) override;
+  void UpdateGaitSequence(const GaitSequence& gs) override;
   bool DoModelAdaptation(ModelInterface& model) override;
-  void RegressorMatrix(const Eigen::Vector3d& orientation,
-                       const Eigen::Vector3d& linear_acceleration,
-                       const Eigen::Vector3d& angular_acceleration,
-                       const std::array<Eigen::Vector3d, 4>& contact_forces,
-                       Eigen::Matrix<double, 6, 10>& y) const;
-  void bVec(const std::array<Eigen::Vector3d, 4>& contact_forces,
-            const std::array<Eigen::Vector3d, 4>& foot_positions,
-            Eigen::Vector<double, 6>& b) const;
+  Eigen::Vector<double, NUM_PARAMS> GetParameterVector() const override;
+  Eigen::Matrix<double, NUM_PARAMS, NUM_PARAMS> GetParameterCovariance() const override;
+  Eigen::Vector<double, NUM_PARAMS> GetDelta() const override;
+  Eigen::Vector<double, 6> GetTotalForceTorque() const override;
+  Eigen::Vector<double, NUM_PARAMS> GetSV() const override;
 
  private:
+  void CalcMeasurementVector(const std::array<Eigen::Vector3d, ModelInterface::N_LEGS>& contact_forces,
+                             const std::array<Eigen::Vector3d, ModelInterface::N_LEGS>& foot_positions,
+                             const std::array<bool, ModelInterface::N_LEGS>& contact_state,
+                             const std::array<bool, ModelInterface::N_LEGS>& planned_contact,
+                             Eigen::Ref<Eigen::Vector<double, 6>> measurement_vector) const;
+
   std::unique_ptr<StateInterface> state_;
-  Eigen::Vector<double, 10> phi_;
-  Eigen::Matrix<double, 10, 10> P_;
-  int buffer_size_;
-  MovingAverage<Eigen::Vector<double, 10>> output_filter_;
-  std::array<Eigen::Vector3d, ModelInterface::N_LEGS> contact_force_buffer_;
-  std::array<Eigen::Vector3d, ModelInterface::N_LEGS> foot_position_buffer_;
-  Eigen::Vector3d orientation_buffer_;
-  Eigen::Vector3d linear_acc_buffer_;
-  Eigen::Vector3d angular_acc_buffer_;
-  int msg_count_ = 0;
-  Eigen::DiagonalMatrix<double, 10> Gamma_;
+  GaitSequence gait_sequence_;
+  Eigen::Vector<double, NUM_PARAMS> parameter_vector_;
+  Eigen::Matrix<double, NUM_PARAMS, NUM_PARAMS> parameter_covariance_;
+  Eigen::Vector<double, NUM_PARAMS> innovation_;
+  Eigen::Vector<double, 6> measurement_vector_;
+  Eigen::Vector<double, NUM_PARAMS> conv_thresh_;
+  std::array<Eigen::Vector3d, ModelInterface::N_LEGS> contact_forces_;
   double lambda_;
   const double g_ = 9.81;  // gravity TODO: make model parameter
+  double leg_total_mass_;
+  Eigen::Vector3d leg_total_mcom_;
 };

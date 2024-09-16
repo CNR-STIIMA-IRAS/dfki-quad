@@ -8,9 +8,7 @@
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "common/custom_qos.hpp"
-#include "std_srvs/srv/trigger.hpp"
-// #include "common/quad_model_symbolic.hpp"
-#include "common/quad_model_symbolic.hpp"
+#include "common/quad_model_pino.hpp"
 #include "common/quad_state.hpp"
 #include "interfaces/msg/joint_cmd.hpp"
 #include "interfaces/msg/leg_cmd.hpp"
@@ -19,6 +17,7 @@
 #include "interfaces/srv/keep_joint_positions.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "std_srvs/srv/trigger.hpp"
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -93,7 +92,7 @@ class LegDriver : public rclcpp::Node {
   interfaces::msg::LegCmd leg_cmd_;
 
   // quad model
-  QuadModelSymbolic quad_model_;
+  QuadModelPino quad_model_;
   bool quad_state_received_;
   bool first_message_received_;
 

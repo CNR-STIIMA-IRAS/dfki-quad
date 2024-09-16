@@ -6,7 +6,8 @@
 
 #include "common/custom_qos.hpp"
 #include "common/eigen_msg_conversions.hpp"
-#include "common/quad_model_symbolic.hpp"
+#include "common/quad_model_pino.hpp"
+#include "common/quad_state.hpp"
 #include "contact_detection.hpp"
 #include "interfaces/msg/contact_state.hpp"
 #include "interfaces/msg/gait_state.hpp"
@@ -26,7 +27,7 @@ class StateEstimationNode : public rclcpp::Node {
   const unsigned int VICON_FILTER_WINDOW = 5;
 
   // Members
-  std::shared_ptr<ModelInterface> &quad_model_;
+  std::shared_ptr<ModelInterface> quad_model_;
   interfaces::msg::JointState joint_state_;
   interfaces::msg::JointCmd joint_cmd_;
   interfaces::msg::GaitState gait_state_;
@@ -86,7 +87,7 @@ class StateEstimationNode : public rclcpp::Node {
   interfaces::msg::QuadState quad_state_msg_;
 
  public:
-  explicit StateEstimationNode(std::shared_ptr<ModelInterface> &quadModel);
+  StateEstimationNode();
 
   // Callbacks
   void JointStatesCallback(const interfaces::msg::JointState &joint_state_msg);

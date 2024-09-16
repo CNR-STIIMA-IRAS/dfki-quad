@@ -1,6 +1,5 @@
 import os
 import sys
-import re
 
 import numpy as np
 import rclpy
@@ -77,18 +76,22 @@ def generate_launch_description():
         sim = True
         unitree = False
         config_file = "mit_controller_sim_ulab.yaml"
+        common_config_file = "common_config_ulab.yaml"
     elif "sim:=go2" in sys.argv[4:] or "sim:=unitree" in sys.argv[4:]:
         sim = True
         unitree = True
         config_file = "mit_controller_sim_go2.yaml"
+        common_config_file = "common_config_go2.yaml"
     elif "real:=ulab" in sys.argv[4:]:
         sim = False
         unitree = False
         config_file = "mit_controller_real_ulab.yaml"
+        common_config_file = "common_config_ulab.yaml"
     elif "real:=go2" in sys.argv[4:] or "real:=unitree" in sys.argv[4:]:
         sim = False
         unitree = True
         config_file = "mit_controller_real_go2.yaml"
+        common_config_file = "common_config_go2.yaml"
     else:
         print("Please specify param 'sim' or 'real' and robot. E.g. 'sim:=ulab' or 'real:=go2'.")
         exit()
@@ -103,7 +106,6 @@ def generate_launch_description():
         mpc_solver_param = ['-p', 'mpc_solver:=FULL_CONDENSING_QPOASES']
     else:
         mpc_solver_param = []
-
 
     substring = "mpc_condensed_size:="
     condensed_param = [s for s in sys.argv[4:] if substring in s]
@@ -134,9 +136,10 @@ def generate_launch_description():
     # elif "mpc_condensed_size:=FULL" in sys.argv[4:]:
     #     mpc_condensed_size_param = ['-p', 'mpc_condensed_size:=1']
 
-
     pkg_controllers = get_package_share_directory("controllers")
+    pkg_common = get_package_share_directory("common")
     controller_config_path = os.path.join(pkg_controllers, "config", config_file)
+    common_config_path = os.path.join(pkg_common, "config", common_config_file)
     cpu_power_logging_config_path = os.path.join(pkg_controllers, "config", "cpu_power_logging.yaml")
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         name="use_sim_time",
@@ -168,9 +171,10 @@ def generate_launch_description():
             package='controllers',  # Replace with the actual package name
             executable='mitcontrollernode',  # Replace with the executable name
             name='mit_controller_node',
-            parameters=[controller_config_path, {"use_sim_time": use_sim_time}],
+            parameters=[controller_config_path, common_config_path, {"use_sim_time": use_sim_time}],
             output='screen',
-            arguments=['--ros-args', '--log-level', ["mit_controller_node:=", "info"]] + mpc_solver_param + mpc_condensed_size_param + mpc_hpipm_mode_param
+            arguments=['--ros-args', '--log-level', ["mit_controller_node:=",
+                                                     "info"]] + mpc_solver_param + mpc_condensed_size_param + mpc_hpipm_mode_param
         ),
         Node(
             package='controllers',  # Replace with the actual package name

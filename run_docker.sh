@@ -15,6 +15,7 @@ if [[ $container_id = "" ]]; then
         --env="QT_X11_NO_MITSHM=1" \
         --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
         --volume="${PWD}/ws/src:/root/ros2_ws/src" \
+        --volume="${PWD}/ws/data:/root/ros2_ws/data" \
         --volume="/home/$USER/.ros_docker_bash_history:/root/.bash_history" \
 	--device="/dev/input:/dev/input" \
 	--device="/dev/ttyACM0:/dev/ttyACM0" \
@@ -31,7 +32,7 @@ if [[ $container_id = "" ]]; then
     docker run "${docker_options[@]}" dfki_quad:latest
 else
     # restart existing container
-    docker start -i $(docker ps -n1 -aq --filter "label=dfki_quad") 
+    docker start -i $(docker ps -n1 -aq --filter "label=dfki_quad")
 fi
 
 exit 0

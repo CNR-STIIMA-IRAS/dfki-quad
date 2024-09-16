@@ -76,6 +76,12 @@ class DrakeSimulator {
   // ROS 2 node handle
   rclcpp::Node::SharedPtr node_;
 
+  // members for noise generation
+  std::random_device rd_{};
+  std::mt19937 gen_{rd_()};
+  std::normal_distribution<double> angular_vel_distr_, linear_acc_distr_, joint_position_distr_, joint_velocity_distr_,
+      joint_effort_distr_, joint_accel_distr_;
+
  public:
   explicit DrakeSimulator();
   virtual ~DrakeSimulator();

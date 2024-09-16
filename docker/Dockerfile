@@ -133,7 +133,7 @@ RUN git clone --recursive https://github.com/fmtlib/fmt.git && cd fmt && git che
 # install arc-opt
 RUN apt-get update && apt-get -y install git cmake build-essential libboost-system-dev libboost-program-options-dev libboost-thread-dev libboost-test-dev pkg-config libeigen3-dev libboost-filesystem-dev
 RUN apt-get update && apt-get -y install liburdfdom-headers-dev liburdfdom-dev
-RUN git clone --branch icra_2025_rev https://github.com/FranekStark/wbc.git && cd wbc
+RUN git clone --branch refactoring --single-branch https://github.com/ARC-OPT/wbc.git && cd wbc && git checkout 5c39722c81d879425adeb4bbe9dcc7e85d1dea5c
 RUN git clone --branch v2.6.8 --recurse-submodules https://github.com/stack-of-tasks/pinocchio.git && cd pinocchio && mkdir build && cd build && cmake .. -DBUILD_PYTHON_INTERFACE=OFF -DBUILD_UNIT_TESTS=OFF -DCMAKE_BUILD_TYPE=Release && make -j$(nproc) && make install
 RUN git clone https://github.com/coin-or/qpOASES.git -b releases/3.2.0 && cd qpOASES &&  mkdir patches && cp ../wbc/patches/qpOASES.patch patches && git apply patches/qpOASES.patch && mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make -j$(nproc) && make install
 RUN git clone --recurse-submodules https://github.com/stack-of-tasks/eiquadprog.git -b v1.2.5 && cd eiquadprog && cp ../wbc/patches/eiquadprog.patch . && git apply eiquadprog.patch && mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make -j$(nproc) && make install
@@ -156,6 +156,9 @@ RUN echo 'source /root/unitree_ros2/install/setup.bash' >> ~/.bashrc
 #RUN git clone https://github.com/CatInTheRain/ros2-vicon-receiver && cd ros2-vicon-receiver && git switch humble && ./install_libs.sh
 #RUN /bin/bash -c "source /opt/ros/humble/setup.bash && cd ros2-vicon-receiver/vicon_receiver && colcon build --symlink-install "
 #RUN echo 'source /root/ros2-vicon-receiver/vicon_receiver/install/setup.bash' >> ~/.bashrc
+
+# Install plotjuggler
+RUN apt-get update && apt-get -y install ros-humble-plotjuggler-ros
 
 # create environments for both robots
 WORKDIR /root

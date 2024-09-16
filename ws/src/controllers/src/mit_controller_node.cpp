@@ -1,7 +1,10 @@
 #include "mit_controller_node.hpp"
 
 MITController::MITController(const std::string &nodeName)
-    : Node(nodeName), last_gait_sequence_mode_(GaitSequence::KEEP), first_quad_state_received_(false) {
+    : Node(nodeName),
+      last_gait_sequence_mode_(GaitSequence::KEEP),
+      first_quad_state_received_(false),
+      quad_model_(*this) {
   this->declare_parameter("initial_height", rclcpp::ParameterType::PARAMETER_DOUBLE);
   this->declare_parameter("slc_swing_height", rclcpp::ParameterType::PARAMETER_DOUBLE);
   this->declare_parameter("wbc.inverse_dynamics.transformation_filter_size", 20);
@@ -55,11 +58,15 @@ MITController::MITController(const std::string &nodeName)
 
   this->declare_parameter("use_model_adaptation", false);
   this->declare_parameter("controller_heartbeat_dt", 0.5);
-  this->declare_parameter<std::vector<double>>("model_parameter_weights",
-                                               {1.0, 0.7, 0.7, 0.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1});
-  this->declare_parameter<std::string>("mpc_solver", "PARTIAL_CONDENSING_OSQP");
-  this->declare_parameter<int>("mpc_condensed_size", MPC_PREDICTION_HORIZON);
-  this->declare_parameter<std::string>("mpc_hpipm_mode", "SPEED_ABS");
+  this->declare_parameter<double>("ma_forgetting_factor", 0.5);
+  this->declare_parameter<std::vector<double>>("ma_convergence_threshold", {0.695, 0.12, 0.11});
+  this->declare_parameter<std::vector<double>>("ma_process_noise", {0.005, 0.0005, 0.0005});
+  this->declare_parameter<std::vector<double>>("ma_measurement_noise",
+                                               {1000.0, 1000.0, 10000.0, 10000.0, 10000.0, 1000.0});
+  this->declare_parameter<int>("ma_mode", 0);
+  this->declare_parameter<std::string>("mpc_solver", "PARTIAL_CONDENSING_HPIPM");
+  this->declare_parameter<int>("mpc_condensed_size", MPC_PREDICTION_HORIZON / 2);
+  this->declare_parameter<std::string>("mpc_hpipm_mode", "SPEED");
   this->declare_parameter<std::string>("wbc.arc_opt.solver", "EiquadprogSolver");
   this->declare_parameter<std::string>("wbc.arc_opt.scene", "AccelerationSceneReducedTSID");
   this->declare_parameter<int>("mpc_warm_start", 1);
@@ -196,6 +203,8 @@ MITController::MITController(const std::string &nodeName)
   }
   quad_model_publisher_ =
       this->create_publisher<interfaces::msg::QuadModel>("quad_model_update", QOS_RELIABLE_NO_DEPTH);
+  quad_model_debug_publisher_ =
+      this->create_publisher<interfaces::msg::QuadModelDebug>("quad_model_debug", QOS_BEST_EFFORT_NO_DEPTH);
   quad_state_subscription_ = this->create_subscription<interfaces::msg::QuadState>(
       "quad_state",
       QOS_RELIABLE_NO_DEPTH,
@@ -265,6 +274,7 @@ MITController::MITController(const std::string &nodeName)
 
   this->declare_parameter("adaptive_gait_sequencer.gait.switch_offsets", true);
   this->declare_parameter<std::vector<double>>("adaptive_gait_sequencer.gait.phase_offset", {0.0, 0.5, 0.5, 0.0});
+  this->declare_parameter<std::vector<double>>("adaptive_gait_sequencer.gait.gait_change_froude", {0.02, 0.006});
 
   on_setparam_callback_handler_ =
       this->add_on_set_parameters_callback([](const std::vector<rclcpp::Parameter> &params) {
@@ -318,6 +328,9 @@ MITController::MITController(const std::string &nodeName)
                 this->get_parameter("adaptive_gait_sequencer.gait.zero_velocity_threshold").as_double());
           } else if (param.name == "adaptive_gait_sequencer.gait.switch_offsets") {
             gait.set_offset_switch(this->get_parameter("adaptive_gait_sequencer.gait.switch_offsets").as_bool());
+          } else if (param.name == "adaptive_gait_sequencer.gait.gait_change_froude") {
+            gait.set_gait_change_froude(
+                to_array<2>(this->get_parameter("adaptive_gait_sequencer.gait.gait_change_froude").as_double_array()));
           } else if (param.name == "adaptive_gait_sequencer.gait.standing_foot_position_threshold") {
             gait.set_standing_foot_position_threshold(
                 this->get_parameter("adaptive_gait_sequencer.gait.standing_foot_position_threshold").as_double());
@@ -470,7 +483,11 @@ MITController::MITController(const std::string &nodeName)
     }
     if (gait_update) {
       RCLCPP_INFO(this->get_logger(), "Gait related parameter has changed, reloading gait sequencer");
-      auto gs = GetGaitSequencerFromParams();
+      quad_state_lock_.lock();
+      auto quad_state = std::make_unique<QuadState>(quad_state_);
+      quad_state_lock_.unlock();
+      auto quad_model = std::make_unique<QuadModelPino>(quad_model_);
+      auto gs = GetGaitSequencerFromParams(std::move(quad_model), std::move(quad_state));
       if (gs) {
         gait_sequencer_lock_.lock();
         gs_ = std::move(gs);
@@ -496,7 +513,8 @@ MITController::MITController(const std::string &nodeName)
   }
   RCLCPP_INFO(this->get_logger(), "First quad_state received, initializing controller");
 
-  gs_ = GetGaitSequencerFromParams();
+  gs_ = GetGaitSequencerFromParams(std::make_unique<QuadModelPino>(quad_model_),
+                                   std::make_unique<QuadState>(quad_state_));
   if (!gs_) {
     RCLCPP_ERROR(this->get_logger(), "Could not load gait sequencer from params");
     rclcpp::shutdown();
@@ -526,32 +544,55 @@ MITController::MITController(const std::string &nodeName)
                                this->get_parameter("mpc_fmin").as_double(),
                                this->get_parameter("mpc_fmax").as_double(),
                                std::make_unique<QuadState>(quad_state_),
-                               std::make_unique<QuadModelSymbolic>(quad_model_),
+                               std::make_unique<QuadModelPino>(quad_model_),
                                mpc_solver,
                                this->get_parameter("mpc_condensed_size").as_int(),
                                this->get_parameter("mpc_hpipm_mode").as_string(),
                                this->get_parameter("mpc_warm_start").as_int(),
                                this->get_parameter("mpc_solver_tolerances").as_double(),
-                               this->get_parameter("mpc_osqp_linsys_solver").as_string()
-                              );
+                               this->get_parameter("mpc_osqp_linsys_solver").as_string());
 
-  Eigen::DiagonalMatrix<double, 10> model_parameter_weights;
-  assert(this->get_parameter("model_parameter_weights").as_double_array().size() == 10);
-  ma_ = std::make_unique<LeastSquaresModelAdaptation>(
-      std::make_unique<QuadModelSymbolic>(quad_model_),
-      std::make_unique<QuadState>(quad_state_),
-      MODEL_ADAPTATION_BATCH_SIZE,
-      Eigen::DiagonalMatrix<double, 10>(Eigen::Map<const Eigen::Matrix<double, 10, 1>>(
-          this->get_parameter("model_parameter_weights").as_double_array().data())),
-      0.5);
+  gs_->UpdateTarget(target_);
+  Eigen::Vector<double, ModelAdaptationInterface::NUM_PARAMS> conv_thresh =
+      Eigen::Map<const Eigen::Vector<double, ModelAdaptationInterface::NUM_PARAMS>>(
+          this->get_parameter("ma_convergence_threshold").as_double_array().data());
+  switch (this->get_parameter("ma_mode").as_int()) {
+    case 1:
+      RCLCPP_INFO(this->get_logger(), "Choosing Recursive Least Squares for Model Adaptation");
+      ma_ = std::make_unique<LeastSquaresModelAdaptation>(
+          std::make_unique<QuadModelPino>(quad_model_),
+          std::make_unique<QuadState>(quad_state_),
+          conv_thresh.setZero(),  // Estimation covariance is not thresholdable here
+          this->get_parameter("ma_forgetting_factor").as_double());
+      break;
+    default: {
+      RCLCPP_INFO(this->get_logger(), "Choosing Kalman Filter for Model Adaptation");
+
+      Eigen::Matrix<double, ModelAdaptationInterface::NUM_PARAMS, ModelAdaptationInterface::NUM_PARAMS> process_noise;
+      process_noise.setIdentity();
+      process_noise.diagonal() = Eigen::Map<const Eigen::Vector<double, ModelAdaptationInterface::NUM_PARAMS>>(
+          this->get_parameter("ma_process_noise").as_double_array().data());
+      Eigen::Matrix<double, 6, 6> measurement_noise;  // 0.1, 0.25, 0.25
+      measurement_noise.setIdentity();
+      measurement_noise.diagonal() = Eigen::Map<const Eigen::Vector<double, 6>>(
+          this->get_parameter("ma_measurement_noise").as_double_array().data());
+
+      ma_ = std::make_unique<KFModelAdaptation>(std::make_unique<QuadModelPino>(quad_model_),
+                                                std::make_unique<QuadState>(quad_state_),
+                                                process_noise,
+                                                measurement_noise,
+                                                9.81,
+                                                conv_thresh);
+      break;
+    }
+  }
+
   slc_ = std::make_unique<SwingLegController>(
       this->get_parameter("slc_swing_height").as_double(),
       this->get_parameter("maximum_swing_leg_progress_to_update_target").as_double(),
       this->get_parameter("slc_world_blend").as_double(),
-      std::make_unique<QuadModelSymbolic>(quad_model_),
+      std::make_unique<QuadModelPino>(quad_model_),
       std::make_unique<QuadState>(quad_state_));
-
-  gs_->UpdateTarget(target_);
 
   WBCType *wbc_ptr;
 
@@ -577,21 +618,20 @@ MITController::MITController(const std::string &nodeName)
         as_eigen_vector<3>(this->get_parameter("wbc.arc_opt.feet_pose_Kd").as_double_array()),
         as_eigen_vector<6>(this->get_parameter("wbc.arc_opt.com_pose_saturation").as_double_array()),
         as_eigen_vector<3>(this->get_parameter("wbc.arc_opt.feet_pose_saturation").as_double_array()),
-        this->get_parameter("wbc_solver_tolerances").as_double()
-      ));
+        this->get_parameter("wbc_solver_tolerances").as_double()));
   } else {
     wbc_ptr = reinterpret_cast<WBCType *>(new InverseDynamics(
-        std::make_unique<QuadModelSymbolic>(quad_model_),
+        std::make_unique<QuadModelPino>(quad_model_),
         std::make_unique<QuadState>(quad_state_),
         this->get_parameter("wbc.inverse_dynamics.foot_position_based_on_target_height").as_bool(),
         this->get_parameter("wbc.inverse_dynamics.foot_position_based_on_target_orientation").as_bool(),
         this->get_parameter("wbc.inverse_dynamics.transformation_filter_size").as_int(),
-        this->get_parameter("wbc.inverse_dynamics.target_velocity_blend").as_double())
-      );
+        this->get_parameter("wbc.inverse_dynamics.target_velocity_blend").as_double()));
   }
   wbc_ = std::unique_ptr<WBCType>(wbc_ptr);
 
   // Now change modus of le driver acording to this controller
+  // comment next paragraph if you want to use controller on bag data
   auto req = std::make_shared<interfaces::srv::ChangeLegDriverMode::Request>();
   req->target_mode = static_cast<int>(leg_control_mode_);
   RCLCPP_INFO(this->get_logger(), "Waiting for leg driver service to become available");
@@ -632,7 +672,8 @@ void MITController::QuadStateUpdateCallback(interfaces::msg::QuadState::SharedPt
   quad_state_ = *quad_state_msg;
   quad_state_lock_.unlock();
 }
-std::unique_ptr<GaitSequencerInterface> MITController::GetGaitSequencerFromParams() const {
+std::unique_ptr<GaitSequencerInterface> MITController::GetGaitSequencerFromParams(
+    std::unique_ptr<ModelInterface> model, std::unique_ptr<StateInterface> state) const {
   assert(this->get_parameter("gs_shoulder_positions").as_double_array().size() == (N_LEGS * 3));
   const std::string gait_sequencer = this->get_parameter("gait_sequencer").as_string();
 
@@ -688,9 +729,8 @@ std::unique_ptr<GaitSequencerInterface> MITController::GetGaitSequencerFromParam
                                               + 6),
             Eigen::Map<const Eigen::Vector3d>(this->get_parameter("gs_shoulder_positions").as_double_array().data()
                                               + 9)},
-        std::make_unique<QuadState>(quad_state_),
-        // TODO: do they have to be gin an initial good state?
-        std::make_unique<QuadModelSymbolic>(quad_model_),
+        std::move(state),
+        std::move(model),
         this->get_parameter("raibert.filtersize").as_int(),
         this->get_parameter("raibert.z_on_plane").as_bool(),
         this->get_parameter("fix_standing_position").as_bool(),
@@ -707,21 +747,23 @@ std::unique_ptr<GaitSequencerInterface> MITController::GetGaitSequencerFromParam
       return nullptr;
     }
     return std::make_unique<AdaptiveGaitSequencer>(
-        AdaptiveGait(to_array<N_LEGS>(po),
-                     MPC_DT,
-                     this->get_parameter("adaptive_gait_sequencer.gait.swing_time").as_double(),
-                     this->get_parameter("adaptive_gait_sequencer.gait.filter_size").as_int(),
-                     this->get_parameter("adaptive_gait_sequencer.gait.zero_velocity_threshold").as_double(),
-                     this->get_parameter("adaptive_gait_sequencer.gait.switch_offsets").as_bool(),
-                     this->get_parameter("adaptive_gait_sequencer.gait.standing_foot_position_threshold").as_double(),
-                     this->get_parameter("adaptive_gait_sequencer.gait.min_v_cmd_factor").as_double(),
-                     this->get_parameter("adaptive_gait_sequencer.gait.max_correction_cycles").as_double(),
-                     this->get_parameter("adaptive_gait_sequencer.gait.correct_all").as_bool(),
-                     this->get_parameter("adaptive_gait_sequencer.gait.correction_period").as_double(),
-                     this->get_parameter("adaptive_gait_sequencer.gait.disturbance_correction").as_double(),
-                     this->get_parameter("adaptive_gait_sequencer.gait.min_v").as_double(),
-                     this->get_parameter("adaptive_gait_sequencer.gait.offset_delay").as_double(),
-                     this->get_parameter("adaptive_gait_sequencer.gait.max_stride_length").as_double()),
+        AdaptiveGait(
+            to_array<N_LEGS>(po),
+            MPC_DT,
+            this->get_parameter("adaptive_gait_sequencer.gait.swing_time").as_double(),
+            this->get_parameter("adaptive_gait_sequencer.gait.filter_size").as_int(),
+            this->get_parameter("adaptive_gait_sequencer.gait.zero_velocity_threshold").as_double(),
+            this->get_parameter("adaptive_gait_sequencer.gait.switch_offsets").as_bool(),
+            to_array<2>(this->get_parameter("adaptive_gait_sequencer.gait.gait_change_froude").as_double_array()),
+            this->get_parameter("adaptive_gait_sequencer.gait.standing_foot_position_threshold").as_double(),
+            this->get_parameter("adaptive_gait_sequencer.gait.min_v_cmd_factor").as_double(),
+            this->get_parameter("adaptive_gait_sequencer.gait.max_correction_cycles").as_double(),
+            this->get_parameter("adaptive_gait_sequencer.gait.correct_all").as_bool(),
+            this->get_parameter("adaptive_gait_sequencer.gait.correction_period").as_double(),
+            this->get_parameter("adaptive_gait_sequencer.gait.disturbance_correction").as_double(),
+            this->get_parameter("adaptive_gait_sequencer.gait.min_v").as_double(),
+            this->get_parameter("adaptive_gait_sequencer.gait.offset_delay").as_double(),
+            this->get_parameter("adaptive_gait_sequencer.gait.max_stride_length").as_double()),
         this->get_parameter("raibert.k").as_double(),
         std::array<const Eigen::Vector3d, N_LEGS>{
             Eigen::Map<const Eigen::Vector3d>(this->get_parameter("gs_shoulder_positions").as_double_array().data()),
@@ -731,8 +773,8 @@ std::unique_ptr<GaitSequencerInterface> MITController::GetGaitSequencerFromParam
                                               + 6),
             Eigen::Map<const Eigen::Vector3d>(this->get_parameter("gs_shoulder_positions").as_double_array().data()
                                               + 9)},
-        std::make_unique<QuadState>(quad_state_),
-        std::make_unique<QuadModelSymbolic>(quad_model_),
+        std::move(state),
+        std::move(model),
         this->get_parameter("raibert.filtersize").as_int(),
         this->get_parameter("raibert.z_on_plane").as_bool(),
         this->get_parameter("fix_standing_position").as_bool(),
@@ -754,7 +796,7 @@ void MITController::QuadControlTargetUpdateCallback(interfaces::msg::QuadControl
   target_.wz = quad_target_msg->hybrid_theta_dot;
   target_.roll = quad_target_msg->roll;
   target_.pitch = quad_target_msg->pitch;
-  gs_->UpdateTarget(target_);
+  // TODO: this is maybe a race condition
 }
 
 void MITController::MPCLoopCallback() {
@@ -765,11 +807,10 @@ void MITController::MPCLoopCallback() {
 
   mpc_lock_.lock();
   gait_sequencer_lock_.lock();
-  // Update States:
   quad_state_lock_.lock();
   QuadState quad_state_temp = quad_state_;
   quad_state_lock_.unlock();
-
+  gs_->UpdateTarget(target_);
   gs_->UpdateState(quad_state_temp);
   mpc_->UpdateState(quad_state_temp);
   slc_->UpdateState(quad_state_temp);
@@ -920,7 +961,7 @@ void MITController::MPCLoopCallback() {
   }
 
   if (open_loop_publisher_ != nullptr) {
-    assert(MPC_PREDICTION_HORIZON == 20);  // fixed message size
+    assert(MPC_PREDICTION_HORIZON == 10);  // fixed message size
     static interfaces::msg::PositionSequence open_loop_positions;
     for (unsigned int ol_idx = 0; ol_idx < MPC_PREDICTION_HORIZON; ol_idx++) {
       open_loop_positions.valid[ol_idx] = true;
@@ -943,12 +984,28 @@ void MITController::MPCLoopCallback() {
 
 void MITController::ModelAdaptationCallback() {
   if (use_model_adaptation_) {
+    interfaces::msg::QuadModelDebug quad_model_debug_msg;
     static QuadState quad_state_temp;
+    static GaitSequence gs_temp;
     quad_state_lock_.lock();
     quad_state_temp = quad_state_;
     quad_state_lock_.unlock();
     ma_->UpdateState(quad_state_temp);
+    gs_wrench_sequence_lock_.lock();
+    gs_temp = gait_sequence_;
+    gs_wrench_sequence_lock_.unlock();
+    ma_->UpdateGaitSequence(gs_temp);
     bool changed_model = ma_->DoModelAdaptation(quad_model_);
+    Eigen::Map<Eigen::Vector<double, ModelAdaptationInterface::NUM_PARAMS>>(
+        quad_model_debug_msg.parameter_vector.data()) = ma_->GetParameterVector();
+    Eigen::Map<Eigen::Vector<double, ModelAdaptationInterface::NUM_PARAMS>>(quad_model_debug_msg.p_matrix.data()) =
+        ma_->GetParameterCovariance().diagonal();
+    Eigen::Map<Eigen::Vector<double, ModelAdaptationInterface::NUM_PARAMS>>(quad_model_debug_msg.update_change.data()) =
+        ma_->GetDelta();
+    Eigen::Map<Eigen::Vector<double, 6>>(quad_model_debug_msg.total_force_torque.data()) = ma_->GetTotalForceTorque();
+    Eigen::Map<Eigen::Vector<double, ModelAdaptationInterface::NUM_PARAMS>>(quad_model_debug_msg.sv.data()) =
+        ma_->GetSV();
+    quad_model_debug_publisher_->publish(quad_model_debug_msg);
     if (changed_model) {
       RCLCPP_INFO(this->get_logger(), "Model Adaptation changed QuadModel");
       interfaces::msg::QuadModel quad_model_msg;
@@ -957,6 +1014,10 @@ void MITController::ModelAdaptationCallback() {
       gs_->UpdateModel(quad_model_);
       mpc_lock_.unlock();
       RCLCPP_INFO(this->get_logger(), "Updated used Model in MPC and GS");
+      wbc_lock_.lock();
+      wbc_->UpdateModel(quad_model_);
+      wbc_lock_.unlock();
+      RCLCPP_INFO(this->get_logger(), "Updated used Model in WBC");
       slc_lock_.lock();
       slc_->UpdateModel(quad_model_);
       slc_lock_.unlock();
@@ -1054,14 +1115,14 @@ void MITController::ControlLoopCallback() {
         if (early_contact_detection_ and !gait[leg_idx] and quad_state_temp.GetFeetContacts()[leg_idx]
             and feet_swing_progress_temp[leg_idx] > 0.5) {  // Early contact
           feet_status_[leg_idx] = EARLY_CONTACT;
-          early_contact_hold_position_[leg_idx] = quad_model_.GetFootPositionInWorld(leg_idx, quad_state_temp);
+          early_contact_hold_position_[leg_idx] = quad_model_.CalcFootPositionInWorld(leg_idx, quad_state_temp);
           RCLCPP_INFO(this->get_logger(), "Foot [%d] has early contact", leg_idx);
           if (PUBLISH_HEARTBEAT) {
             controller_heartbeat_.num_early_contacts++;
           }
         } else if (late_contact_detection_ and gait[leg_idx] and !quad_state_temp.GetFeetContacts()[leg_idx]) {
           feet_status_[leg_idx] = LATE_CONTACT;
-          slip_hold_in_body_[leg_idx] = quad_model_.GetFootPositionInBodyFrame(
+          slip_hold_in_body_[leg_idx] = quad_model_.CalcFootPositionInBodyFrame(
               leg_idx, Eigen::Map<const Eigen::Vector3d>(quad_state_temp.GetJointPositions()[leg_idx].data()));
           RCLCPP_INFO(this->get_logger(), "Foot [%d] has late contact", leg_idx);
         } else if (gait[leg_idx]) {
@@ -1074,7 +1135,7 @@ void MITController::ControlLoopCallback() {
           feet_status_[leg_idx] = SWING;  // Swing scheduled so going to swing phase
         } else if (lost_contact_detection_ and gait[leg_idx] and !quad_state_temp.GetFeetContacts()[leg_idx]) {
           feet_status_[leg_idx] = LOST_CONTACT;  // Slip detected going to slip
-          slip_hold_in_body_[leg_idx] = quad_model_.GetFootPositionInBodyFrame(
+          slip_hold_in_body_[leg_idx] = quad_model_.CalcFootPositionInBodyFrame(
               leg_idx, Eigen::Map<const Eigen::Vector3d>(quad_state_temp.GetJointPositions()[leg_idx].data()));
           RCLCPP_WARN(this->get_logger(),
                       "Foot [%d] lost contact and is kept a last contact position relative to body",

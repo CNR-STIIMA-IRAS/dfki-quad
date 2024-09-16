@@ -368,6 +368,7 @@ AdaptiveGait::AdaptiveGait(const std::array<double, N_LEGS>& phase_offset,
                            unsigned int filter_size,
                            double zero_velocity_threshold,
                            bool switch_offsets,
+                           const std::array<double, 2>& gait_change_froude,
                            double standing_foot_position_threshold,
                            double min_v_cmd_factor,
                            double max_correction_cycles,
@@ -388,6 +389,7 @@ AdaptiveGait::AdaptiveGait(const std::array<double, N_LEGS>& phase_offset,
       velocity_filter_(MovingAverage<Eigen::Vector2d>(filter_size)),
       zero_velocity_threshold_(zero_velocity_threshold),
       switch_offsets_(switch_offsets),
+      gait_change_froude_(gait_change_froude),
       offset_delay_(offset_delay),
       remaining_offset_delay_(-1.0),
       standing_foot_position_threshold_(standing_foot_position_threshold),
@@ -522,7 +524,14 @@ void AdaptiveGait::update_params(double& T,
   }
   // adapt phase offsets // TODO: tune thresholds!
   if (switch_offsets && remaining_offset_delay < 0.0) {  // FIXME: change
-    if (Fr < 0.02) {
+    double froude_to_compare;
+    if (phase_offset_[3] <= 0.25 + std::numeric_limits<double>::epsilon()
+        && phase_offset_[3] >= 0.25 - std::numeric_limits<double>::epsilon()) {
+      froude_to_compare = gait_change_froude_[0];
+    } else {
+      froude_to_compare = gait_change_froude_[1];
+    }
+    if (Fr < froude_to_compare) {
       set_offset({0.0, 0.5, 0.75, 0.25}, true);
     } else {
       set_offset({0.0, 0.5, 0.5, 0.0}, true);
@@ -584,8 +593,11 @@ void AdaptiveGait::nextPhase(std::array<double, N_LEGS>& phase,
                              const std::array<double, N_LEGS>& df_new,
                              const std::optional<std::array<bool, N_LEGS>>& contact_state) {
   for (int i = 0; i < N_LEGS; ++i) {
+    // Update Phase
+    // if leg in standing (or constant flying) mode
     if (T <= std::numeric_limits<double>::epsilon() || df_old[i] <= std::numeric_limits<double>::epsilon()
         || df_old[i] >= 1.0 - std::numeric_limits<double>::epsilon()) {
+      // check if all legs are in standing mode
       bool all = true;
       for (int j = 0; j < N_LEGS; ++j) {
         if (T >= std::numeric_limits<double>::epsilon()
@@ -595,6 +607,7 @@ void AdaptiveGait::nextPhase(std::array<double, N_LEGS>& phase,
           break;
         }
       }
+      // update phase as long as not all legs are in standing mode
       if (!all) {
         phase[i] = std::fmod(phase[i] + dt / T, 1.0);  // try to fix correction steps by adding this
         // phase[i] = fmod(1.0 - phase_offset[i], 1.0);  // FIXME: decide wether this fixes the bug (same foot moves
@@ -727,6 +740,9 @@ void AdaptiveGait::set_disturbance_correction(double factor) { disturbance_corre
 void AdaptiveGait::set_min_v(double v) { min_v_ = v; }
 void AdaptiveGait::set_offset_delay(double delay) { offset_delay_ = delay; }
 void AdaptiveGait::set_max_stride_length(double stride_length) { max_stride_length_ = stride_length; }
+void AdaptiveGait::set_gait_change_froude(const std::array<double, 2>& gait_change_froude) {
+  gait_change_froude_ = gait_change_froude;
+}
 
 // ------------------------- GaitDatabase ------------------------- //
 Gait GaitDatabase::getGait(GaitType type, double dt) {

@@ -69,6 +69,7 @@ elseif (ROBOT_NAME STREQUAL "go2")
     find_package(unitree_ros2_example REQUIRED)
     find_package(CycloneDDS REQUIRED)
     find_package(CycloneDDS-CXX REQUIRED)
+    find_package(iceoryx_binding_c REQUIRED)
 
     #add_library(unitree_sdk2 STATIC IMPORTED) # or STATIC instead of SHARED
     #set_target_properties(unitree_sdk2 PROPERTIES
@@ -91,8 +92,8 @@ elseif (ROBOT_NAME STREQUAL "go2")
             src/abstract_motor_driver.cpp
     )
     ament_target_dependencies(unitree_ros2_motor_driver rclcpp geometry_msgs
-            sensor_msgs std_msgs interfaces unitree_ros2_example unitree_sdk2 unitree_go unitree_api)
-    target_link_libraries(unitree_ros2_motor_driver common::quad_model_symbolic CycloneDDS-CXX::ddscxx CycloneDDS::ddsc rt pthread)
+            sensor_msgs std_msgs interfaces unitree_ros2_example unitree_sdk2 unitree_go unitree_api iceoryx_binding_c)
+    target_link_libraries(unitree_ros2_motor_driver common::quad_model_pino CycloneDDS-CXX::ddscxx CycloneDDS::ddsc rt pthread)
 
 
     install(TARGETS
@@ -114,12 +115,12 @@ endif ()
 
 add_executable(leg_driver src/leg_driver.cpp)
 ament_target_dependencies(leg_driver rclcpp interfaces Eigen3 std_srvs)
-target_link_libraries(leg_driver common::quad_model_symbolic)
+target_link_libraries(leg_driver common::quad_model_pino)
 install(TARGETS leg_driver DESTINATION lib/${PROJECT_NAME})
 
 add_executable(contact_sensor_driver src/contact_sensor_driver.cpp)
 ament_target_dependencies(contact_sensor_driver rclcpp interfaces)
-target_link_libraries(contact_sensor_driver ${LIBSERIAL_LIBRARIES} common::quad_model_symbolic)
+target_link_libraries(contact_sensor_driver ${LIBSERIAL_LIBRARIES} common::quad_model_pino)
 install(TARGETS contact_sensor_driver DESTINATION lib/${PROJECT_NAME})
 
 # Install executables

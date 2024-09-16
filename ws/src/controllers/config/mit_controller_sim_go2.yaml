@@ -21,8 +21,6 @@ mit_controller_node: ##### SIMULATION
     slc_swing_height: 0.05
     slc_world_blend: 1.0
     mpc_alpha: 0.00001
-    mpc_solver: "PARTIAL_CONDENSING_HPIPM"
-    mpc_osqp_linsys_solver: "qdldl"
     mpc_warm_start: 1 # 0: off,  1: warm start, 2: hot start (some solvers)
     ########################## roll, pitch, yaw, x   , y   ,  z, rolld,pitchd,yawd, xd, yd , zd
     mpc_state_weights_stand: [ 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ]
@@ -37,6 +35,11 @@ mit_controller_node: ##### SIMULATION
       -0.197, 0.1738, 0.0,
       -0.197, -0.1738, 0.0
     ]
+    ma_mode: 0 #0:KF, 1:RLS
+    ma_forgetting_factor: 0.5
+    ma_convergence_threshold: [0.695, 0.12, 0.11]
+    ma_process_noise: [0.005, 0.0005, 0.0005]
+    ma_measurement_noise: [1000.0, 1000.0, 10000.0, 10000.0, 1000.0]
     raibert:
       k: 0.03
       filtersize: 20
@@ -56,7 +59,7 @@ mit_controller_node: ##### SIMULATION
         foot_position_based_on_target_orientation: false
         transformation_filter_size: 20
       arc_opt:
-        solver: "HPIPMSolver"
+        solver: "EiquadprogSolver"
         model_urdf: "src/common/model/urdf/go2/urdf/go2_description.urdf"
         feet_names: [ "fl_contact", "fr_contact","bl_contact", "br_contact" ]
         joint_names: [ "fl_abad", "fl_shoulder", "fl_knee", "fr_abad", "fr_shoulder", "fr_knee", "bl_abad", "bl_shoulder", "bl_knee", "br_abad", "br_shoulder", "br_knee" ]
@@ -72,7 +75,6 @@ mit_controller_node: ##### SIMULATION
         feet_pose_Kp: [ 1200.,1200.,1200. ]
         feet_pose_Kd: [ 500.,500.,400. ]
     model_parameter_weights: [ 1.0, 0.5, 0.5, 0.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1 ]
-    wbc_solver_tolerances: 0.001
 joy_to_target:
   ros__parameters:
     init_robot_height: 0.30

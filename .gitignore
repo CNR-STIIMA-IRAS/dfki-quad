@@ -116,3 +116,4 @@ ws/src/state_estimation/cmake_commands.sh
 ws/force_contact.xml
 
 ws/src/COMPARISON_DATA/**
+ws/src/mosek/mosek.lic

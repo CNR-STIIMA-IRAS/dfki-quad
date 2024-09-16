@@ -31,7 +31,7 @@ if (WITH_VICON)
     target_compile_definitions(state_estimation PUBLIC WITH_VICON)
 endif ()
 
-target_link_libraries(state_estimation common::quad_model_symbolic)
+target_link_libraries(state_estimation common::quad_model_pino)
 
 target_include_directories(
         state_estimation

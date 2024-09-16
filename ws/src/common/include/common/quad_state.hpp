@@ -47,6 +47,9 @@ class QuadState : public StateInterface {
   const std::array<std::array<double, NUM_JOINT_PER_FOOT>, NUM_FEET> &GetJointAccelerations() const override;
   const std::array<std::array<double, NUM_JOINT_PER_FOOT>, NUM_FEET> &GetJointTorques() const override;
 
+  void SetVelocitiesToZero() override;
+  void SetAccelerationsToZero() override;
+
   StateInterface &operator=(const StateInterface &other) override;
   StateInterface &operator=(const interfaces::msg::QuadState &msg);
 };

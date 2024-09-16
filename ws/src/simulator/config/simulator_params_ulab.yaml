@@ -23,4 +23,6 @@ drake_simulator:
     reference_link: "base_link"                     # Name of the robot's reference link for pose and twist readings in /quad_state
     manually_step_sim: false                        # If enabled, the simulation ignores the simulator_realtime_rate and the simulation pauses. Instead, a service /step_sim provides manual stepping
     initial_robot_height: 0.3                      # Spawn height of the robot
+    imu_noise: [0.0, 0.0]                       #stddev of noise added to simulated imu data [angular velocity, linear acceleration] ATTENTION: THIS DOES NOT APPEAR IN QUADSTATE MESSAGE
+    joint_noise: [0.0, 0.0, 0.0, 0.0]             #stddev of noise added to simulated joint data [position, velocity, effort, acceleration] ATTENTION: THIS DOES NOT APPEAR IN QUADSTATE MESSAGE
 

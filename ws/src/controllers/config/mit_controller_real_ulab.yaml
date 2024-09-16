@@ -26,6 +26,11 @@ mit_controller_node: ##### REAL SYSTEM
     mpc_mu: 0.45
     mpc_fmin: 4.0
     mpc_fmax: 400.0
+    a_mode: 0 #0:KF, 1:RLS
+    ma_forgetting_factor: 0.5
+    ma_convergence_threshold: [0.695, 0.12, 0.11]
+    ma_process_noise: [0.005, 0.0005, 0.0005]
+    ma_measurement_noise: [1000.0, 1000.0, 10000.0, 10000.0, 1000.0]
     gs_shoulder_positions: [
       0.175, 0.15, 0.0,
       0.175, -0.15, 0.0,
@@ -53,13 +58,13 @@ mit_controller_node: ##### REAL SYSTEM
         joint_names: [ "fl_abad", "fl_shoulder", "fl_knee", "fr_abad", "fr_shoulder", "fr_knee", "bl_abad", "bl_shoulder", "bl_knee", "br_abad", "br_shoulder", "br_knee" ]
         mu: 0.45
         ################## x,y,z, roll, pitch, yaw
-        com_pose_weight: [ 10000.,10000.,10000.,10000.,10000.,10000. ]
+        com_pose_weight: [ 10.,10.,10.,10.,10.,10. ]
         com_pose_Kp: [ 300.,300.,300.,200.,200.,200. ]
         com_pose_Kd: [ 100.,100.,100.,100.,100.,100. ]
         ################## fx, fy, fz
-        foot_force_weight: [ 30000.,30000.,30000. ]
+        foot_force_weight: [ 30.,30.,30. ]
         ################## x,y,z
-        foot_pose_weight: [ 10000.0,10000.0,10000.0 ]
+        foot_pose_weight: [ 10.0,10.0,10.0 ]
         feet_pose_Kp: [ 1500.,1500.,1500. ]
         feet_pose_Kd: [ 100.,100.,100. ]
 joy_to_target:

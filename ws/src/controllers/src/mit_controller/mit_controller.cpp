@@ -102,6 +102,7 @@ int main() {
   //                            std::make_unique<BrickModel>(quad_model),
   //                            10,
   //                            true,
+  //                            {0.02, 0.02}
   //                            0.1,
   //                            0.26,
   //                            0.1,
@@ -322,7 +323,7 @@ int main() {
       auto toc_sc_out = std::chrono::steady_clock::now();
       for (unsigned int foot_idx = 0; foot_idx < N_LEGS; foot_idx++) {
         if (gs.contact_sequence[0][foot_idx]) {  // Replace the current active feet with actual position
-          ft.positions[foot_idx] = quad_model.GetFootPositionInWorld(foot_idx, quad_state);
+          ft.positions[foot_idx] = quad_model.CalcFootPositionInWorld(foot_idx, quad_state);
         }
       }
       std::cout << "SC OUT Time: "

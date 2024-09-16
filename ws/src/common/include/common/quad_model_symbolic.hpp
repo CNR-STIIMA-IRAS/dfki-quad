@@ -151,7 +151,11 @@ class QuadModelSymbolic : public ModelInterface {
   Matrix4d getImuTransform() const { return T_base_imu_; }
   // mass inertial properties
   Matrix3d getBaseInertia() const { return base_inertia_; }
+  void getLegInertia(
+      const std::array<Eigen::Vector<double, ModelInterface::N_JOINTS_PER_LEG>, ModelInterface::N_LEGS>& joint_pos,
+      Eigen::Ref<Eigen::Matrix3d> leg_inertia) const override;
   double getBaseMass() const { return base_mass_; }
+  Vector3d getBaseCOM() const { return Vector3d::Zero(); }
   std::array<double, 3> getLegLinkLengths() const { return {l0_, l1_, l2_}; }
 
   void SetInertia(const Eigen::Matrix3d& inertia_tensor) override;
@@ -217,22 +221,22 @@ class QuadModelSymbolic : public ModelInterface {
                                           const Eigen::Vector3d& foot_pos_legbase,
                                           const Eigen::Vector3d& joint_state_init_guess,
                                           Eigen::Vector3d& joint_state) const;
-  void calcLegInverseKinematicsInBody(int leg_index,
+  void CalcLegInverseKinematicsInBody(int leg_index,
                                       const Eigen::Vector3d& p_ee_B,
                                       const Eigen::Vector3d& joint_state_init_guess,
                                       Eigen::Vector3d& joint_state) const;
 
-  void calcFwdKinLegBase(int leg_index,
+  void CalcFwdKinLegBase(int leg_index,
                          const Vector3d& joint_pos,
                          Matrix4d& T_legBaseToFoot,
                          Vector3d& foot_pos_legbase) const;
 
-  void calcFwdKinLegBody(int leg_indx,
-                         const Vector3d& joint_pos,
+  void CalcFwdKinLegBody(int leg_indx,
+                         const Eigen::Vector3d& joint_pos,
                          Matrix4d& T_BodyToFoot,
                          Vector3d& foot_pos_body) const;
 
-  void calcJacobianLegBase(int leg_index, Vector3d joint_pos, Matrix3d& Jac_legBaseToFoot) const;
+  void CalcJacobianLegBase(int leg_index, Vector3d joint_pos, Matrix3d& Jac_legBaseToFoot) const;
 
   void calcJacobianDotLegBase(int leg_index,
                               Vector3d joint_pos,
@@ -297,7 +301,7 @@ class QuadModelSymbolic : public ModelInterface {
                                  const Vector3d& joint_state_initial_guess,
                                  Vector3d& joint_state) const;
 
-  void calcFootForceVelocityBodyFrame(int leg_index, const StateInterface& state, Vector3d& f_ee, Vector3d& v_ee) const;
+  void CalcFootForceVelocityBodyFrame(int leg_index, const StateInterface& state, Vector3d& f_ee, Vector3d& v_ee) const;
 
   // void CalcFootForceVelocityInBodyFrame(
   //     int leg_index,
@@ -316,7 +320,7 @@ class QuadModelSymbolic : public ModelInterface {
       Eigen::Ref<Eigen::Vector3d> f_ee,
       Eigen::Ref<Eigen::Vector3d> v_ee) const override;
 
-  void calcLegDiffKinematicsBodyFrame(int leg_index,
+  void CalcLegDiffKinematicsBodyFrame(int leg_index,
                                       const StateInterface& state,
                                       Vector3d& f_ee_goal,
                                       Vector3d& v_ee_goal,
@@ -328,19 +332,20 @@ class QuadModelSymbolic : public ModelInterface {
                               const Eigen::Quaterniond& body_orientation,
                               double& base_height) const override;
 
-  virtual Eigen::Vector3d GetFootPositionInWorld(unsigned int foot_idx,
-                                                 const Eigen::Vector3d& body_pos,
-                                                 const Eigen::Quaterniond& body_orientation,
-                                                 const Eigen::Vector3d& joint_positions) const override;
+  virtual Eigen::Vector3d CalcFootPositionInWorld(unsigned int foot_idx,
+                                                  const Eigen::Vector3d& body_pos,
+                                                  const Eigen::Quaterniond& body_orientation,
+                                                  const Eigen::Vector3d& joint_positions) const override;
 
-  virtual Eigen::Vector3d GetFootPositionInWorld(unsigned int foot_idx, const StateInterface& state) const override;
+  virtual Eigen::Vector3d CalcFootPositionInWorld(unsigned int foot_idx, const StateInterface& state) const override;
 
-  virtual Eigen::Vector3d GetFootPositionInBodyFrame(unsigned int foot_idx,
-                                                     const Eigen::Vector3d& joint_positions) const override;
+  virtual Eigen::Vector3d CalcFootPositionInBodyFrame(unsigned int foot_idx,
+                                                      const Eigen::Vector3d& joint_positions) const override;
 
   virtual Eigen::Matrix3d GetInertia() const override;
   virtual double GetInertia(int row, int column) const override;
   virtual double GetMass() const override;
+  virtual double GetLegMass(int foot_idx) const override;
   virtual double GetG() const override;
   static inline double map_angle(const double& value) {
     double mapped_value = fmod(value, (2 * M_PI));
@@ -351,7 +356,7 @@ class QuadModelSymbolic : public ModelInterface {
   }
   Translation3d GetBodyToIMU() const override;
   Eigen::Translation3d GetBodyToBellyBottom() const override;
-
+  Translation3d GetBodyToLegBase(int foot_idx) const override;
   virtual bool IsLyingDown(const std::array<const Eigen::Vector3d, ModelInterface::N_LEGS>& joint_states,
                            const std::array<double, ModelInterface::N_LEGS>& distance_threshold) const override;
   Translation3d GetBodyToBellyBottom(unsigned int leg) const override;
@@ -362,7 +367,23 @@ class QuadModelSymbolic : public ModelInterface {
   double ComputeEnergyDerivative(int leg_index,
                                  const Eigen::Vector3d& joint_vel,
                                  const Eigen::Vector3d& tau) const override;
+  void ComputeMomentumSignal(const StateInterface& state,
+                             Eigen::Vector<double, ModelInterface::NUM_JOINTS + 6>& momentum_signal) const override;
+  void ComputeGeneralizedMomentum(
+      const Eigen::Vector<double, ModelInterface::NUM_JOINTS + 7>& joint_pos,
+      const Eigen::Vector<double, ModelInterface::NUM_JOINTS + 6>& joint_vel,
+      Eigen::Vector<double, ModelInterface::NUM_JOINTS + 6>& generalized_momentum) const override;
+  void ComputeEstimatedForces(int leg_index,
+                              const Eigen::Vector<double, ModelInterface::N_JOINTS_PER_LEG>& tau_disturbed,
+                              const Eigen::Vector<double, ModelInterface::N_JOINTS_PER_LEG>& joint_pos,
+                              Eigen::Vector3d& estimated_forces) const override;
+  void ComputeRegressorMatrix(
+      const StateInterface& state,
+      Eigen::Matrix<double, ModelInterface::NUM_JOINTS + 6, (ModelInterface::NUM_JOINTS + 1) * 10>& regressor)
+      const override;
   Translation3d GetBodyToCOM() const override;
+  Translation3d GetBodyToLegCOM(int foot_idx) const override;
 
   QuadModelSymbolic& operator=(const ModelInterface& other) override;
+  const Vector<double, 130>& GetAllDynamicParameters() override;
 };

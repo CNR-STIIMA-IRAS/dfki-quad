@@ -20,20 +20,20 @@ const std::array<Eigen::Vector3d, StateInterface::NUM_FEET> &QuadState::GetConta
   return contact_forces_;
 }
 
-const std::array<std::array<double, StateInterface::NUM_JOINT_PER_FOOT>, StateInterface::NUM_FEET> &
-QuadState::GetJointPositions() const {
+const std::array<std::array<double, StateInterface::NUM_JOINT_PER_FOOT>, StateInterface::NUM_FEET>
+    &QuadState::GetJointPositions() const {
   return joint_positions_;
 }
-const std::array<std::array<double, StateInterface::NUM_JOINT_PER_FOOT>, StateInterface::NUM_FEET> &
-QuadState::GetJointVelocities() const {
+const std::array<std::array<double, StateInterface::NUM_JOINT_PER_FOOT>, StateInterface::NUM_FEET>
+    &QuadState::GetJointVelocities() const {
   return joint_velocities_;
 }
-const std::array<std::array<double, StateInterface::NUM_JOINT_PER_FOOT>, StateInterface::NUM_FEET> &
-QuadState::GetJointAccelerations() const {
+const std::array<std::array<double, StateInterface::NUM_JOINT_PER_FOOT>, StateInterface::NUM_FEET>
+    &QuadState::GetJointAccelerations() const {
   return joint_accelerations_;
 }
-const std::array<std::array<double, StateInterface::NUM_JOINT_PER_FOOT>, StateInterface::NUM_FEET> &
-QuadState::GetJointTorques() const {
+const std::array<std::array<double, StateInterface::NUM_JOINT_PER_FOOT>, StateInterface::NUM_FEET>
+    &QuadState::GetJointTorques() const {
   return joint_torques_;
 }
 
@@ -80,6 +80,26 @@ void QuadState::UpdateFromMsg(const interfaces::msg::QuadState &quad_state_msg) 
           quad_state_msg.joint_state.acceleration[foot_idx * NUM_JOINT_PER_FOOT + joint_idx];
       joint_torques_[foot_idx][joint_idx] =
           quad_state_msg.joint_state.effort[foot_idx * NUM_JOINT_PER_FOOT + joint_idx];
+    }
+  }
+}
+
+void QuadState::SetVelocitiesToZero() {
+  linear_velocity_.setZero();
+  angular_velocity_.setZero();
+  for (int foot_idx = 0; foot_idx < NUM_FEET; foot_idx++) {
+    for (int joint_idx = 0; joint_idx < NUM_JOINT_PER_FOOT; joint_idx++) {
+      joint_velocities_[foot_idx][joint_idx] = 0.0;
+    }
+  }
+}
+
+void QuadState::SetAccelerationsToZero() {
+  linear_acceleration_.setZero();
+  angular_acceleration_.setZero();
+  for (int foot_idx = 0; foot_idx < NUM_FEET; foot_idx++) {
+    for (int joint_idx = 0; joint_idx < NUM_JOINT_PER_FOOT; joint_idx++) {
+      joint_accelerations_[foot_idx][joint_idx] = 0.0;
     }
   }
 }

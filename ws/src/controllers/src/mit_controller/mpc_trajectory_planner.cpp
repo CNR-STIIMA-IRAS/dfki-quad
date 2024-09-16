@@ -22,8 +22,9 @@ MPCTrajectoryPlanner::MPCTrajectoryPlanner(double dt,
       sequence_initialized_(false),
       distance_threshold_(distance_threshold),
       angular_threshold_(angular_threshold),
-      velocity_threshold_(velocity_threshold),
-      foot_heights_(std::array<double, 4>{}){};
+      velocity_threshold_(velocity_threshold) {
+  foot_heights_.fill(std::numeric_limits<double>::max());
+};
 
 void MPCTrajectoryPlanner::plan_trajectory(GaitSequence& sequence, const Target& target) {
   Eigen::Vector3d position = quad_state_.GetPositionInWorld();
@@ -34,7 +35,7 @@ void MPCTrajectoryPlanner::plan_trajectory(GaitSequence& sequence, const Target&
   auto contacts = quad_state_.GetFeetContacts();
   for (int leg = 0; leg < N_LEGS; ++leg) {
     if (contacts[leg]) {
-      foot_heights_[leg] = quad_model_.GetFootPositionInWorld(leg, quad_state_).z();
+      foot_heights_[leg] = quad_model_.CalcFootPositionInWorld(leg, quad_state_).z();
     }
   }
 
@@ -126,7 +127,7 @@ void MPCTrajectoryPlanner::plan_trajectory(GaitSequence& sequence, const Target&
       position(1) = target.y;
     }
     if (target.active.z) {
-      double min_foot_height = *std::min_element(foot_heights_.begin(), foot_heights_.end());
+      double min_foot_height = get_min_foot_height();
       position(2) = target.z + min_foot_height;
     }
     sequence.reference_trajectory_position[i] = position;
@@ -254,7 +255,7 @@ void MPCTrajectoryPlanner::plan_desired_trajectory(GaitSequence& sequence, const
       position(1) = target.y;
     }
     if (target.active.z) {
-      double min_foot_height = *std::min_element(foot_heights_.begin(), foot_heights_.end());
+      double min_foot_height = get_min_foot_height();
       position(2) = target.z + min_foot_height;
     }
     sequence.desired_reference_trajectory_position[i] = position;
@@ -346,7 +347,7 @@ void MPCTrajectoryPlanner::set_current_target(GaitSequence& sequence, const Targ
   if (target.active.y) {
     position(1) = target.y;
   }
-  double min_foot_height = *std::min_element(foot_heights_.begin(), foot_heights_.end());
+  double min_foot_height = get_min_foot_height();
   if (target.active.z) {
     position(2) = target.z + min_foot_height;
   }

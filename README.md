@@ -7,6 +7,8 @@ This repo contains the quadruped controller used at DFKI's underactuated lab.
 It mainly contains a *simulation*, dynamic walking controller using *MPC*, *WBC* and different *Gait Sequencers* and hardware *drivers* to be used with different quadrupeds.
 - To install the whole software stack please refer to [Installation](#installation)
 - To run the simulated experiments from our paper [**Benchmarking Different QP Formulations and Solvers for Dynamic Quadrupedal Walking**](https://arxiv.org/abs/2502.01329) please refer to section [Run the solver comparison experiments](#run-the-solver-comparison-experiments)
+- To run the model-adaptation from out paper **Adaptive Model-Based Control of Quadrupeds via Online System
+Identification using Kalman Filter** (under review) please refer to section [Run adaptive MPC experiments](#run-adaptive-mpc-experiments)
 - To run the controller in simulation or on your own hardware *(EXPERIMENTAL)*, pleae refer to [Run the software stack](#run-the-software-stack)
 
 ## Authors
@@ -40,7 +42,7 @@ And it is additionally supported by the M-RoCK project funded by the German Aero
 Further, it is additionally supported with project funds from the federal state of Bremen for setting up the Underactuated Robotics Lab (Grant Number: 201-001-10-3/2023-3-2).
 
 ## Contributing
-Please use the [issue tracker](https://github.com/dfki-ric-underactuated-lab/dfki-quad/issues), to submit bug reports and feature requests. 
+Please use the [issue tracker](https://github.com/dfki-ric-underactuated-lab/dfki-quad/issues), to submit bug reports and feature requests.
 lease use merge requests as described [here](CONTRIBUTING.md) to add/adapt functionality.
 
 
@@ -108,9 +110,10 @@ Currently, most scripts support Logitech F310 type gamepads. For other gamepads 
     > **Note:** The unitree software stack requires cyclone dds, which will be setup by the last command. This means that your network interface need to be configured in this script.
 If you just want to use the simulation, independent from the build command, please just source `setup_ulab_workspace.bash`.
 
-## Run the solver comparison experiments 
+## Run the solver comparison experiments
 If you want to repoduce the results from __Benchmarking Different QP Formulations and Solvers for Dynamic
 Quadrupedal Walking__ follow the following instruction:
+- Nake sure that you checkout git tag **ICRA25**
 
 > Note: If you just want to recreate the plots, you can use our [Dataset](https://zenodo.org/records/13767157?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6ImM2YmI4M2E3LTFjYTEtNDQxYS1iYzZmLTNjMzg2ZGFmZmYzYSIsImRhdGEiOnt9LCJyYW5kb20iOiJhNzZmMGE3ZmUzZTYxNGUyODg5YjJkMWI0N2RiMDkyZCJ9.6vIqkFOnB-MqHcPBpA3v8jU4oUmoOM4eOaKRF3BtRhVLIcOoaQ3HVdNrFoN2r6kkmCvU09NPV8mPprelmFgK-A) and jump directly to step (5).
 
@@ -132,7 +135,7 @@ Quadrupedal Walking__ follow the following instruction:
     ```bash
     sr # This sources the ros environment for the simulation
     export ROS_DOMAIN_ID=123 # Make sure both machines run on the same ROS 2 Domain ID
-    ros2 launch simulator simulator.launch.py sim:=go2 
+    ros2 launch simulator simulator.launch.py sim:=go2
     ```
 
 * Visualization will be rendered (if configured) and can be seen in the browser (URL will be shown in the terminal, often [localhost:7000](http://localhost:7000/)).
@@ -142,7 +145,7 @@ Quadrupedal Walking__ follow the following instruction:
     ```bash
     # Outside of docker run:
     ./automatic_solver_experiments.sh <pc_name> <test_preset> 123 ICRA25_N20 20 ICRA25_N10 10
-    
+
     # <pc_name> specfies the name of the target computer which is used to label the experiments (in the paper this was out of [arm_orin, desktop_pc, latte_panda])
 
     # <test_preset> specifies which test preset should be run for the paper this is both [mpc, wbc]
@@ -173,7 +176,7 @@ Quadrupedal Walking__ follow the following instruction:
         - [Line 634](ws/src/solver_experiments/solver_experiments/solver_experiments.py#L634) sets which OSQP backends are included in the tests
         - [Line 640](ws/src/solver_experiments/solver_experiments/solver_experiments.py#L640) sets which solver tolerances are included in the tests
         - [Lines 649ff](ws/src/solver_experiments/solver_experiments/solver_experiments.py#L649) define the test presets as used by the automatic experiment script
-        
+
 
 **5. Generate the plots**
 * Assuming all different experiment result folders (named in the scheme defined above) containing the single experiments have been moved to one empty root folder, the plots can be generated.
@@ -185,7 +188,34 @@ Quadrupedal Walking__ follow the following instruction:
     > **Note:** It is recommended to run the python scripts and Jupyter notebook from the docker image as all dependencies are installed there.
 * After the location has been set, run the script and the plots are being generated. This might take a while.
 
+## Run adaptive MPC experiments
+If you want to test the algorithm described in __Adaptive Model-Based Control of Quadrupeds via Online System
+Identification using Kalman Filter__(under review), make sure that you checkout git tag **IROS25** and run the software stack as described in [Run the software stack](#run-the-software-stack) either in simulation or on real hardware. Once the controller is running, follow these instructions:
 
+**1. Activate Model Adaptation** In a new terminal: access the docker container
+```bash
+./new_docker_shell.sh
+```
+If you are using real hardware, make sure you call ```sg```. Then run:
+```bash
+ros2 param set /mit_controller_node use_model_adaptation true
+```
+
+**2. (Optional:) Vizualize the Model Updates** The model updates are published on /quad_model_update. You can use any plotting tool you like. We recommend plotjuggler which is installed in the docker container:
+
+In a new terminal run:
+```bash
+xhost +local:docker
+```
+This enables docker to open external windows. Access the docker container and make sure you call ```sg```, if you use real hardware. Then run plotjuggler:
+```bash
+ros2 run plotjuggler plotjuggler
+```
+Start the listener and select /quad_model_update and/or /quad_model_debug.
+
+**Note 1:** Always make sure you set the right ROS_DOMAIN_ID when you start a new terminal.
+
+**Note 2:** The way it is tuned, the adaptation only sends updates to the controller when the estimation covariance is low enough. This is for the GO2 robot the case during stepping motion. Therefore, data will only then appear on /quad_model_update. The thresholds and algorithm properties can be accessed in /ws/src/controllers/config/mit_controller_`<`real/sim`>`_`<`go2/ulab`>`.yaml
 
 ## Run the software stack
 You can run the software stack using the simulation or using a real hardware (for example the Unitree GO2 in the education version).
@@ -200,7 +230,7 @@ Following components have to be launched to run the software stack:
 Please find instructions for all components below.
 > **Note:** Almost all commands in this section need to run in seperate terminals.
 ### Robot selection
-* When running a launch file, the used robot and whether it is on the real system or in simulation has to be specified. 
+* When running a launch file, the used robot and whether it is on the real system or in simulation has to be specified.
 For this, it is required to set either the parameter `sim` or the parameter `real` to `ulab` for the dfki dog or to `go2` for the unitree.
 For this, you have to append either `sim:=ulab`, `sim:=go2`, `real:=ulab` or `real:=go2` to the launch commands.
 Eg. for the MPC controller:
@@ -226,14 +256,14 @@ this is only an upper bound, meaning that the simulator might run slower.
 
 * In order to synchronize the rest of the software stack the simulator publishes the simulation time on the ` /clock` topic (following the ROS 2 convention).
 **To synchronize other nodes, instead of following the computer time (in ROS also known as wall time), they have to listen to this clock topic.**
-This can be archived by setting the `use_sim_time` parameter to `True` when launching the respective node. 
+This can be archived by setting the `use_sim_time` parameter to `True` when launching the respective node.
 **This parameter is automatically set to correctly when using the provided launch files.**
 
     > **Note on developing nodes that use a timer or follow a clock:** \
     Depending on the `use_sim_time` the call node->get_clock() will return a clock that follows the system's time (wall time)  or the `/clock` topic.
     To create a timer based on this setting use the following call:
     [`rclcpp::create_timer(node, node->get_clock(),...)`](https://docs.ros.org/en/ros2_packages/rolling/api/rclcpp/generated/function_namespacerclcpp_1a480aa4d6e0efd8063c211749706e3019.html#)
-    Using the call [`node->create_wall_timer(...)`](https://docs.ros.org/en/ros2_packages/rolling/api/rclcpp/generated/classrclcpp_1_1Node.html#_CPPv4I000EN6rclcpp4Node17create_wall_timerEN6rclcpp9WallTimerI9CallbackTE9SharedPtrENSt6chrono8durationI12DurationRepT9DurationTEE9CallbackTN6rclcpp13CallbackGroup9SharedPtrEb) will create a timer that follows the system time, ignoring the `use_sim_time` setting.  
+    Using the call [`node->create_wall_timer(...)`](https://docs.ros.org/en/ros2_packages/rolling/api/rclcpp/generated/classrclcpp_1_1Node.html#_CPPv4I000EN6rclcpp4Node17create_wall_timerEN6rclcpp9WallTimerI9CallbackTE9SharedPtrENSt6chrono8durationI12DurationRepT9DurationTEE9CallbackTN6rclcpp13CallbackGroup9SharedPtrEb) will create a timer that follows the system time, ignoring the `use_sim_time` setting.
     **It is very important to consider for each timer if it should follow the simulation or real-time during simulation! Making the wrong decision may result in undesired behaviour during simulation.**
 
     #### Reset simulation
@@ -250,7 +280,7 @@ In order to step the simulation manually the parameter `manually_step_sim` in th
 The simulator then provides a service `/step_sim` of type [StepSimulation.srv](ws/src/interfaces/srv/StepSimulation.srv)
 which will advance the simulation by the amount of seconds specified in the request.
     ```bash
-    ros2 service call /step_sim interfaces/srv/StepSimulation dt:\ 10.0\ 
+    ros2 service call /step_sim interfaces/srv/StepSimulation dt:\ 10.0\
 
     ```
 
@@ -260,7 +290,7 @@ which will advance the simulation by the amount of seconds specified in the requ
 > When working with a real system be careful and mind the following safety measures:
 > - Brushless motors can be very powerful, moving with tremendous force and speed. Always limit the range of motion, power, force and speed using configurable parameters, current limited supplies, and mechanical design.
 >   - Make sure you have access to emergency stop while doing experiments.
-  
+
 #### Unitree GO2 Edu
 1. Connect the target computer (that should run the controller, leg driver, hardware driver, state estimation) via ethernet to the quadruped, and make sure it is configured as described [here](https://github.com/unitreerobotics/unitree_ros2?tab=readme-ov-file#connect-to-unitree-robot).
 2. Install build docker, install the software stack using the GO2 option, as described above.
@@ -268,7 +298,7 @@ which will advance the simulation by the amount of seconds specified in the requ
     ```bash
    ./run_docker # if not already done, or maybe ./new_docker_shell
     sg # This is a shorthand to source the workspace and set the correct ROS DDS, FOR THE GO2 QUAD THIS HAS TO BE DONE IN EVERY SHELL
-   ros2 launch drivers unitree_ros2_motor_driver.launch.py 
+   ros2 launch drivers unitree_ros2_motor_driver.launch.py
    ```
 
     > **Note:** The target computer could also be the additional onbaord computer of the GO2 EDU. Details on how to acces the computer can be found [here](https://www.docs.quadruped.de/projects/go2/html/go2_driver.html#go2-network-interface).
@@ -339,7 +369,7 @@ which will advance the simulation by the amount of seconds specified in the requ
     # select robot with sim:=ulab, sim:=go2, real:=ulab or real:=go2
     ros2 launch state_estimation state_estimation.launch.py sim:=go2
     ```
-  
+
 ### Leg driver
 * Start the leg driver with:
     ```bash

@@ -76,7 +76,7 @@ class SysIDLegControllerNode : public rclcpp::Node {
       joint_positions = Eigen::Map<Eigen::Vector<double, 12>>(quad_state_msg->joint_state.position.data());
       std::cout << "used joint positions " << joint_positions.block<3, 1>(legno_ * 3, 0).transpose() << std::endl;
       Eigen::Vector3d EE_pos_bf, EE_zero_pos_bf;
-      EE_start_pos_ = quad_model_.GetFootPositionInBodyFrame(legno_, joint_positions.block<3, 1>(legno_ * 3, 0));
+      EE_start_pos_ = quad_model_.CalcFootPositionInBodyFrame(legno_, joint_positions.block<3, 1>(legno_ * 3, 0));
       std::cout << "Start EE position " << EE_start_pos_.transpose() << std::endl;
     }
   }
