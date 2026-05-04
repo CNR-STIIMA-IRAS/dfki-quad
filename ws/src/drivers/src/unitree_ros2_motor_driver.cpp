@@ -27,13 +27,13 @@ using std::placeholders::_1;
 
 class UnitreeMotorDriver : public AbstractMotorDriver {
  private:
-  // Create the suber  to receive low state of robot
+  // Create the suber to receive low state of robot
   rclcpp::Subscription<unitree_go::msg::LowState>::SharedPtr suber;
 
   unitree_go::msg::IMUState imu;          // Unitree go2 IMU message
   unitree_go::msg::MotorState motor[12];  // Unitree go2 motor state message
   int16_t foot_force[4];                  // External contact force value (int)
-  int16_t foot_force_est[4];              // Estimated  external contact force value (int)
+  int16_t foot_force_est[4];              // Estimated external contact force value (int)
   float battery_voltage;                  // Battery voltage
   float battery_current;                  // Battery current
 
@@ -59,7 +59,7 @@ class UnitreeMotorDriver : public AbstractMotorDriver {
   double n_motors = 12;
   int main_cpu;
   bool hand_back_control_to_unitree_;
-  //  unitree::robot::go2::RobotStateClient rsc;
+  // unitree::robot::go2::RobotStateClient rsc;
 
   rclcpp::Publisher<interfaces::msg::ContactState>::SharedPtr contact_state_pub_;
 
@@ -75,7 +75,7 @@ class UnitreeMotorDriver : public AbstractMotorDriver {
     this->declare_parameter("hand_back_control_to_unitree", rclcpp::ParameterType::PARAMETER_BOOL);
     hand_back_control_to_unitree_ = this->get_parameter("hand_back_control_to_unitree").as_bool();
 
-    // The suber  callback function is bind to low_state_suber::topic_callback
+    // The suber callback function is bind to low_state_suber::topic_callback
     suber = this->create_subscription<unitree_go::msg::LowState>(
         topic_name, QOS_BEST_EFFORT_NO_DEPTH, std::bind(&UnitreeMotorDriver::topic_callback, this, _1));
 
@@ -97,20 +97,20 @@ class UnitreeMotorDriver : public AbstractMotorDriver {
     battery_state_pub = this->create_publisher<interfaces::msg::BatteryState>("/battery_state", QOS_RELIABLE_NO_DEPTH);
 
     RCLCPP_INFO(this->get_logger(), "Setting up rsc");
-    //    rsc.SetTimeout(10.0f);
-    //    rsc.Init();
+    // rsc.SetTimeout(10.0f);
+    // rsc.Init();
 
     // Initialize lowcmd
     init_cmd();
   }
   ~UnitreeMotorDriver() = default;
   void init_cmd() {
-    //    rsc.ServiceSwitch("sport_mode", 0);
+    // rsc.ServiceSwitch("sport_mode", 0);
 
-    //    cmd_msg.head[0] = 0xFE;
-    //    cmd_msg.head[1] = 0xEF;
-    //    cmd_msg.level_flag = 0xFF;
-    //    cmd_msg.gpio = 0;
+    // cmd_msg.head[0] = 0xFE;
+    // cmd_msg.head[1] = 0xEF;
+    // cmd_msg.level_flag = 0xFF;
+    // cmd_msg.gpio = 0;
 
     // try to send it into dmaping mode:
     {
@@ -131,51 +131,102 @@ class UnitreeMotorDriver : public AbstractMotorDriver {
       auto fut_res = rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut);
       t.join();
     }
-
-    // try to disable the sport mode:
-    RCLCPP_INFO(this->get_logger(), "Disable sports mode");
-    unitree_api::msg::Request req;  // The content of this message is reverse engineered and nowhere documented
-    req.header.identity.id = 0;
-    req.header.lease.id = 0;
-    req.header.identity.api_id = 1001;
-    req.header.policy.priority = 0;
-    req.header.policy.noreply = false;
-    req.parameter = "{\"name\":\"sport_mode\",\"switch\":0}";
-    req.binary = {0};
-    // await response
-    std::packaged_task<bool()> wait_response([this, req]() {
-      while (true) {
-        RCLCPP_INFO(this->get_logger(), "Sending request");
-        robot_state_request_pub->publish(req);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        if (robot_state_responses_.size() > 0) {
-          RCLCPP_INFO(this->get_logger(), "Received answer");
-          auto resp = robot_state_responses_.front();
-          robot_state_responses_.pop_front();
-          if ((resp.header.identity.api_id == 1001) and (resp.header.status.code == 0)
-              and (resp.data.compare("{\"name\":\"sport_mode\",\"status\":1}") == 0)) {
-            RCLCPP_INFO(this->get_logger(), "Answer ok");
-            return true;
-          } else {
-            RCLCPP_INFO(this->get_logger(),
-                        "Answer is not ok (%li, %i, %s)",
-                        resp.header.identity.api_id,
-                        resp.header.status.code,
-                        resp.data.c_str());
-            return false;
+    {
+      // try to disable the sport mode:
+      RCLCPP_INFO(this->get_logger(), "Disable sports mode");
+      unitree_api::msg::Request req;  // The content of this message is reverse engineered and nowhere documented
+      req.header.identity.id = 0;
+      req.header.lease.id = 0;
+      req.header.identity.api_id = 1001;
+      req.header.policy.priority = 0;
+      req.header.policy.noreply = false;
+      req.parameter = "{\"name\":\"sport_mode\",\"switch\":0}";
+      req.binary = {0};
+      // await response
+      std::packaged_task<bool()> wait_response([this, req]() {
+        while (true) {
+          RCLCPP_INFO(this->get_logger(), "Sending request");
+          robot_state_request_pub->publish(req);
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+          if (robot_state_responses_.size() > 0) {
+            RCLCPP_INFO(this->get_logger(), "Received answer");
+            auto resp = robot_state_responses_.front();
+            robot_state_responses_.pop_front();
+            if ((resp.header.identity.api_id == 1001) and (resp.header.status.code == 0)
+                and (resp.data.compare("{\"name\":\"sport_mode\",\"status\":1}") == 0)) {
+              RCLCPP_INFO(this->get_logger(), "Answer ok");
+              return true;
+            } else {
+              RCLCPP_INFO(this->get_logger(),
+                          "Answer is not ok (%li, %i, %s)",
+                          resp.header.identity.api_id,
+                          resp.header.status.code,
+                          resp.data.c_str());
+              return false;
+            }
           }
         }
+      });
+
+      auto fut = wait_response.get_future();
+      std::thread t(std::move(wait_response));
+      auto fut_res = rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut);
+      t.join();
+      if (fut.get()) {
+        RCLCPP_INFO(this->get_logger(), "Sport mode has been disabled");
+      } else {
+        RCLCPP_ERROR(this->get_logger(), "Error while disabling sport mode, ending");
+        exit(-1);
       }
-    });
-    auto fut = wait_response.get_future();
-    std::thread t(std::move(wait_response));
-    auto fut_res = rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut);
-    t.join();
-    if (fut.get()) {
-      RCLCPP_INFO(this->get_logger(), "Sport mode has been disabled");
-    } else {
-      RCLCPP_ERROR(this->get_logger(), "Error while disabling sport mode, ending");
-      exit(-1);
+    }
+
+    {
+      // try to disable thre mcf
+      RCLCPP_INFO(this->get_logger(), "Disable mcf");
+      unitree_api::msg::Request req;  // The content of this message is reverse engineered and nowhere documented
+      req.header.identity.id = 0;
+      req.header.lease.id = 0;
+      req.header.identity.api_id = 1001;
+      req.header.policy.priority = 0;
+      req.header.policy.noreply = false;
+      req.parameter = "{\"name\":\"mcf\",\"switch\":0}";
+      req.binary = {0};
+      // await response
+      std::packaged_task<bool()> wait_response([this, req]() {
+        while (true) {
+          RCLCPP_INFO(this->get_logger(), "Sending request");
+          robot_state_request_pub->publish(req);
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+          if (robot_state_responses_.size() > 0) {
+            RCLCPP_INFO(this->get_logger(), "Received answer");
+            auto resp = robot_state_responses_.front();
+            robot_state_responses_.pop_front();
+            if ((resp.header.identity.api_id == 1001) and (resp.header.status.code == 0)
+                and (resp.data.compare("{\"name\":\"mcf\",\"status\":1}") == 0)) {
+              RCLCPP_INFO(this->get_logger(), "Answer ok");
+              return true;
+            } else {
+              RCLCPP_INFO(this->get_logger(),
+                          "Answer is not ok (%li, %i, %s)",
+                          resp.header.identity.api_id,
+                          resp.header.status.code,
+                          resp.data.c_str());
+              return false;
+            }
+          }
+        }
+      });
+
+      auto fut = wait_response.get_future();
+      std::thread t(std::move(wait_response));
+      auto fut_res = rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut);
+      t.join();
+      if (fut.get()) {
+        RCLCPP_INFO(this->get_logger(), "mcf has been disabled");
+      } else {
+        RCLCPP_ERROR(this->get_logger(), "Error while disabling mcf, ending");
+        exit(-1);
+      }
     }
 
     for (int i = 0; i < 20; i++) {
@@ -370,12 +421,12 @@ class UnitreeMotorDriver : public AbstractMotorDriver {
       mstate.torque = motor[i].tau_est;
       motor_states_[std::make_tuple(1, i)] = mstate;
       // RCLCPP_INFO(this->get_logger(),
-      //               "Motor state -- num: %d; q: %f; dq: %f; ddq: %f; tau: %f",
-      //               i,
-      //               mstate.position,
-      //               mstate.velocity,
-      //               motor[i].ddq,
-      //               mstate.torque);
+      // "Motor state -- num: %d; q: %f; dq: %f; ddq: %f; tau: %f",
+      // i,
+      // mstate.position,
+      // mstate.velocity,
+      // motor[i].ddq,
+      // mstate.torque);
     }
 
     // Convert Eigen::Vector3<float> to double values
@@ -409,7 +460,7 @@ int main(int argc, char* argv[]) {
   if (!rclcpp::ok()) {
     rclcpp::init(argc, argv);
   }
-  //  unitree::robot::ChannelFactory::Instance()->Init(0, "enp0s31f6");
+  // unitree::robot::ChannelFactory::Instance()->Init(0, "enp0s31f6");
   signal(SIGINT, UnitreeMotorDriver::static_sigint_handler);
   rclcpp::spin(std::make_shared<UnitreeMotorDriver>());  // Run ROS2 node which is make share with low_state_suber class
   rclcpp::shutdown();
