@@ -16,15 +16,9 @@
 [submodule "ws/deps/fmt"]
 	path = ws/deps/fmt
 	url = https://github.com/fmtlib/fmt
-[submodule "ws/deps/wbc"]
-	path = ws/deps/wbc
-	url = https://github.com/ARC-OPT/wbc
 [submodule "ws/deps/acados"]
 	path = ws/deps/acados
 	url = https://github.com/acados/acados
-[submodule "ws/src/unitree_go"]
-	path = ws/deps/unitree_go
-	url = https://github.com/Unitree-Go2-Robot/unitree_go.git
 [submodule "ws/deps/osqp"]
 	path = ws/deps/osqp
 	url = https://github.com/osqp/osqp.git
@@ -34,3 +28,6 @@
 [submodule "ws/deps/qpOASES"]
 	path = ws/deps/qpOASES
 	url = https://github.com/coin-or/qpOASES
+[submodule "ws/deps/unitree_go"]
+	path = ws/deps/unitree_go
+	url = https://github.com/Unitree-Go2-Robot/unitree_go.git
