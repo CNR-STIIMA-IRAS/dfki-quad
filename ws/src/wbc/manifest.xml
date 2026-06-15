@@ -28,13 +28,6 @@
     <classifier>ubuntu</classifier>
   </classifiers>
 
-  <depend package="control/qpOASES" />
-  <depend package="control/pinocchio" />
-  <depend package="tinyxml2" />
-  
-  <depend package="control/hyrodyn" optional="1"/>
-  <depend package="control/rbdl" optional="1"/>  
-  <depend package="control/proxqp" optional="1"/>  
-  <depend package="control/qpSWIFT" optional="1"/>
-  <depend package="control/eiquadprog" optional="1"/>
+  <!-- Legacy rosbuild manifest kept for archival metadata only.
+       Runtime/build dependencies are declared in package.xml (ament/ROS 2). -->
 </package>

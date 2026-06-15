@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 NEW)
+endif()
 project(common)
 
 set(CMAKE_BUILD_TYPE Release)
@@ -22,7 +25,18 @@ if (ON_PI)
 endif ()
 
 if (NOT WITHOUT_DRAKE)
-    find_package(drake CONFIG REQUIRED /opt/drake)
+    set(DRAKE_INSTALL_PREFIX "" CACHE PATH "Drake install prefix")
+    foreach(_drake_prefix IN ITEMS
+            "${DRAKE_INSTALL_PREFIX}"
+            "$ENV{DRAKE_INSTALL_PREFIX}"
+            "/home/feynman/drake/drake-build/install"
+            "/home/feynman/drake/drakebuild/install"
+            "/opt/drake")
+        if(_drake_prefix AND EXISTS "${_drake_prefix}")
+            list(PREPEND CMAKE_PREFIX_PATH "${_drake_prefix}")
+        endif()
+    endforeach()
+    find_package(drake CONFIG REQUIRED)
 endif ()
 include_directories(include/common)
 if (NOT WITHOUT_DRAKE)

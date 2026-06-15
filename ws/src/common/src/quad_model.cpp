@@ -146,7 +146,9 @@ void QuadModel::loadModel(std::string urdf_path) {
   body_idx.push_back(base_body.index());
   const drake::multibody::SpatialInertia<double> I =
       quad_->CalcSpatialInertia(*ctxt_, quad_->GetFrameByName("base_link"), body_idx);
-  base_inertia_ = I.CalcRotationalInertia().ShiftToCenterOfMassInPlace(I.get_mass(), I.get_com()).CopyToFullMatrix3();
+  auto base_inertia = I.CalcRotationalInertia();
+  base_inertia.ShiftToCenterOfMassInPlace(I.get_mass(), I.get_com());
+  base_inertia_ = base_inertia.CopyToFullMatrix3();
   base_mass_ = I.get_mass();
 
   // Furthermore, get the transform from base link to shoulder.

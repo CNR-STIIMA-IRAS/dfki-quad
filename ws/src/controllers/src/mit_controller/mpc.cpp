@@ -236,6 +236,7 @@ MPC::MPC(double alpha,
                                  "hpipm_mode",
                                  (void *)hpipm_mode.c_str());
   }
+#ifdef ACADOS_WITH_OSQP
   if (solver == PARTIAL_CONDENSING_OSQP) {
     std::cout << "Set osqp linear system solver to " << osqp_linsys_solver.c_str() << std::endl;
     ocp_qp_xcond_solver_opts_set(solver_config_,
@@ -248,6 +249,9 @@ MPC::MPC(double alpha,
                                   "osqp_polish",
                                   &polish);                  
   }
+#else
+  (void)osqp_linsys_solver;
+#endif
 
   ocp_qp_xcond_solver_opts_set(
       solver_config_, reinterpret_cast<ocp_qp_xcond_solver_opts *>(solver_opts_), "warm_start", &warm_start);

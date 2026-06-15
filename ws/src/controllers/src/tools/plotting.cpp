@@ -52,7 +52,7 @@ void GaitPlottingNode::GaitStateCallback(interfaces::msg::GaitState::SharedPtr m
 
   v_des_buffer_[buffer_index_] = v_des.norm();
 
-  buffer_index_ = ++buffer_index_ % BUFFER_SIZE;
+  buffer_index_ = (buffer_index_ + 1) % BUFFER_SIZE;
 }
 
 void GaitPlottingNode::QuadStateCallback(interfaces::msg::QuadState::SharedPtr msg) {

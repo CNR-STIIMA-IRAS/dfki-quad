@@ -257,8 +257,9 @@ int main(int argc, char* argv[]) {
   std::vector<drake::multibody::BodyIndex> body_indices = quad->GetBodyIndices(quadmodel_instance_index);
   const drake::multibody::SpatialInertia<double> I =
       quad->CalcSpatialInertia(*context, quad->GetFrameByName("base_link"), body_indices);
-  auto base_inertia =
-      I.CalcRotationalInertia().ShiftToCenterOfMassInPlace(I.get_mass(), I.get_com()).CopyToFullMatrix3();
+  auto base_rotational_inertia = I.CalcRotationalInertia();
+  base_rotational_inertia.ShiftToCenterOfMassInPlace(I.get_mass(), I.get_com());
+  auto base_inertia = base_rotational_inertia.CopyToFullMatrix3();
 
   std::cout << "\n---Total inerta---" << std::endl;
   std::cout << "Urdf:\n" << base_inertia << std::endl;

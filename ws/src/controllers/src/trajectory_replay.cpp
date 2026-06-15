@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include "ament_index_cpp/get_package_share_directory.hpp"
+#include "ament_index_cpp/get_package_share_path.hpp"
 #include "common/custom_qos.hpp"
 #include "common/quad_model_symbolic.hpp"
 #include "common/quad_state.hpp"
@@ -45,7 +45,7 @@ struct ReplayState {
 
 class TrajectoryReplay : public rclcpp::Node {
  public:
-  TrajectoryReplay() : Node("trajectory_replay") {
+  TrajectoryReplay() : Node("trajectory_replay"), quad_model_(QuadModelSymbolic::UNITREE_QUAD) {
     // declare parameters
     this->declare_parameter("csv_name", "");
     this->declare_parameter("update_freq", 400.0);
@@ -109,14 +109,14 @@ class TrajectoryReplay : public rclcpp::Node {
     this->declare_parameter("wait",
                             true);  // this parameter is used to start trajectory after init phase
 
-    std::string default_urdf_path = ament_index_cpp::get_package_share_directory("common");
+    std::string default_urdf_path = ament_index_cpp::get_package_share_path("common").string();
     default_urdf_path += "/model/urdf/quad.urdf";
     this->declare_parameter("urdf_path", default_urdf_path);
 
     std::string urdf_path = this->get_parameter("urdf_path").get_parameter_value().get<std::string>();
 
     // read parameters
-    csv_path_ = ament_index_cpp::get_package_share_directory("controllers") + "/trajectories/"
+    csv_path_ = ament_index_cpp::get_package_share_path("controllers").string() + "/trajectories/"
                 + this->get_parameter("csv_name").as_string();
     state_machine_ = this->get_parameter("state_machine").get_parameter_value().get<bool>();
     cartesian_ = this->get_parameter("cartesian_control").get_parameter_value().get<bool>();

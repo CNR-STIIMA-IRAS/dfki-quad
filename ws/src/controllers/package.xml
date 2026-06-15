@@ -18,7 +18,7 @@
     <depend>rclcpp</depend>
   </export>
 
-
+  <depend>ament_index_cpp</depend>
   <depend>interfaces</depend>
   <depend>simulator</depend>
   <depend>common</depend>

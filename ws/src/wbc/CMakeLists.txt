@@ -1,4 +1,7 @@
 cmake_minimum_required (VERSION 3.16.3)
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 NEW)
+endif()
 project(wbc)
 
 # The nested upstream install tree is incompatible with ament's symlink

@@ -521,21 +521,42 @@ MITController::MITController(const std::string &nodeName)
   }
 
   auto mpc_solver_name = this->get_parameter("mpc_solver").as_string();
-  ocp_qp_solver_t mpc_solver = PARTIAL_CONDENSING_OSQP;
+  ocp_qp_solver_t mpc_solver = PARTIAL_CONDENSING_HPIPM;
+  bool solver_available = true;
   if (mpc_solver_name == "PARTIAL_CONDENSING_HPIPM") {
     mpc_solver = PARTIAL_CONDENSING_HPIPM;
   } else if (mpc_solver_name == "PARTIAL_CONDENSING_OSQP") {
+#ifdef ACADOS_WITH_OSQP
     mpc_solver = PARTIAL_CONDENSING_OSQP;
+#else
+    solver_available = false;
+#endif
   } else if (mpc_solver_name == "FULL_CONDENSING_HPIPM") {
     mpc_solver = FULL_CONDENSING_HPIPM;
   } else if (mpc_solver_name == "FULL_CONDENSING_DAQP") {
+#ifdef ACADOS_WITH_DAQP
     mpc_solver = FULL_CONDENSING_DAQP;
+#else
+    solver_available = false;
+#endif
   } else if (mpc_solver_name == "FULL_CONDENSING_QPOASES") {
+#ifdef ACADOS_WITH_QPOASES
     mpc_solver = FULL_CONDENSING_QPOASES;
+#else
+    solver_available = false;
+#endif
   } else if (mpc_solver_name == "PARTIAL_CONDENSING_QPDUNES") {
+#ifdef ACADOS_WITH_QPDUNES
     mpc_solver = PARTIAL_CONDENSING_QPDUNES;
+#else
+    solver_available = false;
+#endif
   } else {
     RCLCPP_ERROR(this->get_logger(), "Unknown mpc solver: %s", mpc_solver_name.c_str());
+    exit(-1);
+  }
+  if (!solver_available) {
+    RCLCPP_ERROR(this->get_logger(), "MPC solver %s is not available in this acados build", mpc_solver_name.c_str());
     exit(-1);
   }
   mpc_ = std::make_unique<MPC>(this->get_parameter("mpc_alpha").as_double(),

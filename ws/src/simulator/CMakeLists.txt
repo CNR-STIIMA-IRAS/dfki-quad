@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 NEW)
+endif()
 project(simulator)
 
 option(ON_PI "On Raspberry Pi" FALSE)
@@ -26,6 +29,17 @@ find_package(rclcpp REQUIRED)
 find_package(interfaces REQUIRED)
 find_package(common REQUIRED)
 find_package(sensor_msgs REQUIRED)
+set(DRAKE_INSTALL_PREFIX "" CACHE PATH "Drake install prefix")
+foreach(_drake_prefix IN ITEMS
+        "${DRAKE_INSTALL_PREFIX}"
+        "$ENV{DRAKE_INSTALL_PREFIX}"
+        "/home/feynman/drake/drake-build/install"
+        "/home/feynman/drake/drakebuild/install"
+        "/opt/drake")
+    if(_drake_prefix AND EXISTS "${_drake_prefix}")
+        list(PREPEND CMAKE_PREFIX_PATH "${_drake_prefix}")
+    endif()
+endforeach()
 find_package(drake CONFIG REQUIRED)
 find_package(rosgraph_msgs CONFIG REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -36,7 +50,7 @@ include_directories(${EIGEN_INCLUDE_DIR})
 add_executable(visualizer src/drake_visualizer.cpp)
 add_executable(simulator src/drake_simulator.cpp src/pd_changeable_controller.cpp)
 add_executable(sim_disturber src/disturbance_node.cpp)
-add_library(drake_visualizers src/drake_vizualisers/positions_vizualiser.cpp
+add_library(drake_visualizers STATIC src/drake_vizualisers/positions_vizualiser.cpp
         src/drake_vizualisers/forces_vizualiser.cpp
         src/drake_vizualisers/vectors_vizualiser.cpp
         src/drake_vizualisers/poses_vizualiser.cpp
@@ -46,39 +60,36 @@ target_link_libraries(visualizer drake_visualizers)
 
 include_directories(include)
 
-
-ament_target_dependencies(
+target_link_libraries(
         visualizer
-        rclcpp
-        interfaces
-        common
-        sensor_msgs
-        drake
-        Eigen3)
+        rclcpp::rclcpp
+        interfaces::interfaces__rosidl_typesupport_cpp
+        sensor_msgs::sensor_msgs__rosidl_typesupport_cpp
+        common::quad_model_pino
+        drake::drake
+        Eigen3::Eigen)
 
-ament_target_dependencies(drake_visualizers
-        drake
-        Eigen3
-)
+target_link_libraries(
+        drake_visualizers
+        drake::drake
+        Eigen3::Eigen)
 
-ament_target_dependencies(
+target_link_libraries(
         simulator
-        drake
-        rclcpp
-        interfaces
-        sensor_msgs
-        rosgraph_msgs
-        common
-        Eigen3
-)
+        drake::drake
+        rclcpp::rclcpp
+        interfaces::interfaces__rosidl_typesupport_cpp
+        sensor_msgs::sensor_msgs__rosidl_typesupport_cpp
+        rosgraph_msgs::rosgraph_msgs__rosidl_typesupport_cpp
+        common::quad_model_pino
+        Eigen3::Eigen)
 
-ament_target_dependencies(
+target_link_libraries(
         sim_disturber
-        rclcpp
-        interfaces
-        common
-        Eigen3
-)
+        rclcpp::rclcpp
+        interfaces::interfaces__rosidl_typesupport_cpp
+        common::quad_model_pino
+        Eigen3::Eigen)
 
 target_include_directories(
         visualizer PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

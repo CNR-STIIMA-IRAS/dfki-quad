@@ -139,8 +139,7 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
                       com_pose_weight,  // vector: xyz, roll pitch yaw
                       1),
       wbc_robot_model_,
-      "base_link",
-      "world");
+      "base_link");
   fmt::print("com weights: {} \n", fmt::join(wbc_com_task_->weights, ", "));
   wbc_tasks.push_back(wbc_com_task_);
 #else
@@ -155,8 +154,7 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
                                                                 0,
                                                                 foot_force_weight,
                                                                 quad_state_->GetFeetContacts()[feet_idx]),
-                                                wbc_robot_model_,
-                                                "world");
+                                                wbc_robot_model_);
     wbc_tasks.push_back(wbc_foot_contact_tasks_[feet_idx]);
 #else
     std::cout << "FEET_FORCE_TASK is deactivated" << std::endl;
@@ -169,8 +167,7 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
                         stack(foot_pose_weight, Eigen::Vector3d::Zero().eval()),  // 6 dof vector
                         !quad_state_->GetFeetContacts()[feet_idx]),
         wbc_robot_model_,
-        feet_names[feet_idx],
-        "world");
+        feet_names[feet_idx]);
     wbc_tasks.push_back(wbc_foot_pose_tasks_[feet_idx]);
 #else
     std::cout << "FEET_POS_TASK is deactivated" << std::endl;

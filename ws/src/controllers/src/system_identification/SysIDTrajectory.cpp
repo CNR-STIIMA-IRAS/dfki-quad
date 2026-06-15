@@ -1,14 +1,13 @@
 #include "system_identification/SysIDTrajectory.hpp"
 
 SysIdTrajectory::SysIdTrajectory(const Eigen::Ref<const Eigen::Vector3d> position,
-                                 const double a,
-                                 const double b,
-                                 const double c)
-    : position_(position), a_(a), b_(b), c_(c) {
+    const double a,
+    const double b,
+    const double c)
+    : segment_time_(0.0), a_(a), b_(b), c_(c), position_(position) {
   // segment parameters
   p0_.setZero();        // start point, spherical coordinates
   pf_.setZero();        // end point, spherical coordinates
-  segment_time_ = 0.0;  // segment total time
   // current EE position and velocity, cartesian coordinates
   pos_.setZero();
   vel_.setZero();

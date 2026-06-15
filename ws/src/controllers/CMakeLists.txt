@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 NEW)
+endif()
 project(controllers)
 
 option(ON_PI "On Raspberry Pi" FALSE)
@@ -25,6 +28,7 @@ endif ()
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_export_targets REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(interfaces REQUIRED)
@@ -35,6 +39,17 @@ find_package(common REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(OpenMP) # for speeding up eigens matrix multiplications
 if (NOT WITHOUT_DRAKE)
+    set(DRAKE_INSTALL_PREFIX "" CACHE PATH "Drake install prefix")
+    foreach(_drake_prefix IN ITEMS
+            "${DRAKE_INSTALL_PREFIX}"
+            "$ENV{DRAKE_INSTALL_PREFIX}"
+            "/home/feynman/drake/drake-build/install"
+            "/home/feynman/drake/drakebuild/install"
+            "/opt/drake")
+        if(_drake_prefix AND EXISTS "${_drake_prefix}")
+            list(PREPEND CMAKE_PREFIX_PATH "${_drake_prefix}")
+        endif()
+    endforeach()
     find_package(drake CONFIG REQUIRED)
     find_package(simulator REQUIRED)
 endif ()
@@ -44,26 +59,37 @@ find_package(unitree_go REQUIRED)
 find_package(fmt REQUIRED)
 find_package(PkgConfig REQUIRED)
 
+set(MATPLOT_SANITIZER_LINK_FLAGS "")
+set(MATPLOT_SANITIZER_RUNTIME_LIBS "")
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    # Workspace matplot++ may be built with ASan/UBSan instrumentation.
+    # Add runtime linkage to prevent unresolved __asan/__ubsan symbols.
+    set(MATPLOT_SANITIZER_LINK_FLAGS -fsanitize=address -fsanitize=undefined)
+    list(APPEND MATPLOT_SANITIZER_RUNTIME_LIBS asan ubsan)
+endif ()
+
 function(target_ros_dependencies target)
     foreach(dependency IN LISTS ARGN)
         if(dependency STREQUAL "Eigen3")
             target_link_libraries(${target} Eigen3::Eigen)
         elseif(dependency STREQUAL "interfaces")
             target_link_libraries(${target}
-                    interfaces::interfaces__rosidl_generator_cpp)
+                    interfaces::interfaces__rosidl_typesupport_cpp)
         elseif(dependency STREQUAL "rclcpp")
             target_link_libraries(${target} rclcpp::rclcpp)
+        elseif(dependency STREQUAL "ament_index_cpp")
+            target_link_libraries(${target} ament_index_cpp::ament_index_cpp)
         elseif(dependency STREQUAL "common")
             target_link_libraries(${target} common::quad_model_pino)
         elseif(dependency STREQUAL "std_msgs")
             target_link_libraries(${target}
-                    std_msgs::std_msgs__rosidl_generator_cpp)
+                    std_msgs::std_msgs__rosidl_typesupport_cpp)
         elseif(dependency STREQUAL "sensor_msgs")
             target_link_libraries(${target}
-                    sensor_msgs::sensor_msgs__rosidl_generator_cpp)
+                    sensor_msgs::sensor_msgs__rosidl_typesupport_cpp)
         elseif(dependency STREQUAL "geometry_msgs")
             target_link_libraries(${target}
-                    geometry_msgs::geometry_msgs__rosidl_generator_cpp)
+                    geometry_msgs::geometry_msgs__rosidl_typesupport_cpp)
         elseif(dependency STREQUAL "drake")
             target_link_libraries(${target} drake::drake)
         elseif(dependency STREQUAL "simulator")
@@ -113,8 +139,9 @@ endif ()
 if (NOT WITHOUT_DRAKE)
     add_executable(trajectory_replay src/trajectory_replay.cpp)
 
-    target_ros_dependencies(trajectory_replay interfaces rclcpp
+    target_ros_dependencies(trajectory_replay interfaces rclcpp ament_index_cpp
             sensor_msgs geometry_msgs common)
+    target_link_libraries(trajectory_replay common::quad_model_symbolic)
 
     target_include_directories(
             trajectory_replay
@@ -131,7 +158,8 @@ add_executable(gait_plotting src/tools/plotting.cpp)
 
 target_ros_dependencies(gait_plotting Eigen3 interfaces rclcpp common
 )
-target_link_libraries(gait_plotting matplot)
+target_link_libraries(gait_plotting Matplot++::matplot ${MATPLOT_SANITIZER_RUNTIME_LIBS})
+target_link_options(gait_plotting PRIVATE ${MATPLOT_SANITIZER_LINK_FLAGS})
 
 target_include_directories(
         gait_plotting
@@ -146,7 +174,8 @@ add_executable(gait_sequence_plotting src/tools/plot_gs.cpp)
 
 target_ros_dependencies(gait_sequence_plotting Eigen3 interfaces rclcpp common
 )
-target_link_libraries(gait_sequence_plotting matplot)
+target_link_libraries(gait_sequence_plotting Matplot++::matplot ${MATPLOT_SANITIZER_RUNTIME_LIBS})
+target_link_options(gait_sequence_plotting PRIVATE ${MATPLOT_SANITIZER_LINK_FLAGS})
 
 target_include_directories(
         gait_sequence_plotting
@@ -175,7 +204,8 @@ if (NOT WITHOUT_DRAKE)
     )
 
     target_ros_dependencies(mitcontroller Eigen3 interfaces common drake simulator)
-    target_link_libraries(mitcontroller acados matplot)
+    target_link_libraries(mitcontroller acados Matplot++::matplot ${MATPLOT_SANITIZER_RUNTIME_LIBS})
+    target_link_options(mitcontroller PRIVATE ${MATPLOT_SANITIZER_LINK_FLAGS})
     target_compile_options(mitcontroller PRIVATE -Wall -Wextra -Wpedantic -Werror)
     ament_export_targets(mitcontroller HAS_LIBRARY_TARGET)
     install(
@@ -262,7 +292,7 @@ target_include_directories(
 add_executable(testSwingTrajectoryControllerNode src/testSwingTrajectoryControllerNode.cpp
         src/SwingTrajectory.cpp)
 
-target_ros_dependencies(testSwingTrajectoryControllerNode Eigen3 interfaces rclcpp
+target_ros_dependencies(testSwingTrajectoryControllerNode Eigen3 interfaces rclcpp ament_index_cpp
         sensor_msgs geometry_msgs common)
 
 target_include_directories(
@@ -278,6 +308,7 @@ target_include_directories(
 add_executable(SysIDLegControllerNode src/system_identification/SysIDLegControllerNode.cpp src/system_identification/SysIDTrajectory.cpp)
 
 target_ros_dependencies(SysIDLegControllerNode Eigen3 interfaces rclcpp common)
+target_link_libraries(SysIDLegControllerNode common::quad_model_symbolic)
 
 target_include_directories(
         SysIDLegControllerNode

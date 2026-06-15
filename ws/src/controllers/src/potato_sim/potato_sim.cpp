@@ -184,8 +184,9 @@ BrickModel PotatoSimulator::GetModel() const {
       plant_->CalcSpatialInertia(plant_->GetMyContextFromRoot(simulator_->get_context()),
                                  plant_->GetFrameByName("base_link"),
                                  {plant_body_index_});
-  auto base_inertia_ =
-      I.CalcRotationalInertia().ShiftToCenterOfMassInPlace(I.get_mass(), I.get_com()).CopyToFullMatrix3();
+  auto base_rotational_inertia = I.CalcRotationalInertia();
+  base_rotational_inertia.ShiftToCenterOfMassInPlace(I.get_mass(), I.get_com());
+  auto base_inertia_ = base_rotational_inertia.CopyToFullMatrix3();
 
   return BrickModel(
       base_inertia_,
