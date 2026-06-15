@@ -22,6 +22,7 @@
   <depend>interfaces</depend>
   <depend>simulator</depend>
   <depend>common</depend>
+  <depend>wbc</depend>
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
 </package>

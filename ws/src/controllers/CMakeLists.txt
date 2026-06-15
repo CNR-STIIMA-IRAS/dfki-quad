@@ -23,9 +23,7 @@ endif ()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in further dependencies
-# manually. find_package(<dependency> REQUIRED)
-find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_export_targets REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -45,22 +43,51 @@ find_package(Matplot++ REQUIRED)
 find_package(unitree_go REQUIRED)
 find_package(fmt REQUIRED)
 find_package(PkgConfig REQUIRED)
-find_package(OsqpEigen REQUIRED)
+
+function(target_ros_dependencies target)
+    foreach(dependency IN LISTS ARGN)
+        if(dependency STREQUAL "Eigen3")
+            target_link_libraries(${target} PUBLIC Eigen3::Eigen)
+        elseif(dependency STREQUAL "interfaces")
+            target_link_libraries(${target} PUBLIC
+                    interfaces::interfaces__rosidl_generator_cpp)
+        elseif(dependency STREQUAL "rclcpp")
+            target_link_libraries(${target} PUBLIC rclcpp::rclcpp)
+        elseif(dependency STREQUAL "common")
+            target_link_libraries(${target} PUBLIC common::quad_model_pino)
+        elseif(dependency STREQUAL "std_msgs")
+            target_link_libraries(${target} PUBLIC
+                    std_msgs::std_msgs__rosidl_generator_cpp)
+        elseif(dependency STREQUAL "sensor_msgs")
+            target_link_libraries(${target} PUBLIC
+                    sensor_msgs::sensor_msgs__rosidl_generator_cpp)
+        elseif(dependency STREQUAL "geometry_msgs")
+            target_link_libraries(${target} PUBLIC
+                    geometry_msgs::geometry_msgs__rosidl_generator_cpp)
+        elseif(dependency STREQUAL "drake")
+            target_link_libraries(${target} PUBLIC drake::drake)
+        elseif(dependency STREQUAL "simulator")
+            target_link_libraries(${target} PUBLIC simulator::drake_visualizers)
+        else()
+            message(FATAL_ERROR "Unsupported dependency ${dependency}")
+        endif()
+    endforeach()
+endfunction()
 
 
 # ARCOPT
 pkg_search_module(wbc-core REQUIRED IMPORTED_TARGET wbc-core)
 pkg_search_module(wbc-robot_models-pinocchio REQUIRED IMPORTED_TARGET wbc-robot_models-pinocchio)
-pkg_search_module(wbc-solvers-eiquadprog REQUIRED IMPORTED_TARGET wbc-solvers-eiquadprog)
-pkg_search_module(wbc-solvers-qpswift REQUIRED IMPORTED_TARGET wbc-solvers-qpswift)
-pkg_search_module(wbc-solvers-proxqp REQUIRED IMPORTED_TARGET wbc-solvers-proxqp)
 pkg_search_module(wbc-solvers-qpoases REQUIRED IMPORTED_TARGET wbc-solvers-qpoases)
 pkg_search_module(wbc-scenes-acceleration_reduced_tsid REQUIRED IMPORTED_TARGET wbc-scenes-acceleration_reduced_tsid)
 pkg_search_module(wbc-scenes-acceleration_tsid REQUIRED IMPORTED_TARGET wbc-scenes-acceleration_tsid)
 pkg_search_module(wbc-controllers REQUIRED IMPORTED_TARGET wbc-controllers)
-pkg_search_module(wbc-solvers-osqp REQUIRED IMPORTED_TARGET wbc-solvers-osqp)
 pkg_search_module(wbc-types REQUIRED IMPORTED_TARGET wbc-types)
-pkg_search_module(wbc-solvers-hpipm REQUIRED IMPORTED_TARGET wbc-solvers-hpipm)
+pkg_search_module(wbc-solvers-eiquadprog QUIET IMPORTED_TARGET wbc-solvers-eiquadprog)
+pkg_search_module(wbc-solvers-qpswift QUIET IMPORTED_TARGET wbc-solvers-qpswift)
+pkg_search_module(wbc-solvers-proxqp QUIET IMPORTED_TARGET wbc-solvers-proxqp)
+pkg_search_module(wbc-solvers-osqp QUIET IMPORTED_TARGET wbc-solvers-osqp)
+pkg_search_module(wbc-solvers-hpipm QUIET IMPORTED_TARGET wbc-solvers-hpipm)
 # pkg_search_module(base-types REQUIRED IMPORTED_TARGET base-types)
 
 
@@ -86,7 +113,7 @@ endif ()
 if (NOT WITHOUT_DRAKE)
     add_executable(trajectory_replay src/trajectory_replay.cpp)
 
-    ament_target_dependencies(trajectory_replay interfaces rclcpp
+    target_ros_dependencies(trajectory_replay interfaces rclcpp
             sensor_msgs geometry_msgs common)
 
     target_include_directories(
@@ -102,7 +129,7 @@ endif ()
 
 add_executable(gait_plotting src/tools/plotting.cpp)
 
-ament_target_dependencies(gait_plotting Eigen3 interfaces rclcpp common
+target_ros_dependencies(gait_plotting Eigen3 interfaces rclcpp common
 )
 target_link_libraries(gait_plotting matplot)
 
@@ -117,7 +144,7 @@ target_include_directories(
 
 add_executable(gait_sequence_plotting src/tools/plot_gs.cpp)
 
-ament_target_dependencies(gait_sequence_plotting Eigen3 interfaces rclcpp common
+target_ros_dependencies(gait_sequence_plotting Eigen3 interfaces rclcpp common
 )
 target_link_libraries(gait_sequence_plotting matplot)
 
@@ -147,7 +174,7 @@ if (NOT WITHOUT_DRAKE)
             src/model_adaptation/kf_model_adaptation.cpp
     )
 
-    ament_target_dependencies(mitcontroller Eigen3 interfaces common drake simulator)
+    target_ros_dependencies(mitcontroller Eigen3 interfaces common drake simulator)
     target_link_libraries(mitcontroller acados matplot)
     target_compile_options(mitcontroller PRIVATE -Wall -Wextra -Wpedantic -Werror)
     ament_export_targets(mitcontroller HAS_LIBRARY_TARGET)
@@ -188,20 +215,24 @@ set_source_files_properties(
         COMPILE_FLAGS -fpermissive
 )
 
+set(WBC_SOLVER_TARGETS PkgConfig::wbc-solvers-qpoases)
+foreach(optional_solver IN ITEMS eiquadprog qpswift proxqp osqp hpipm)
+    if(TARGET PkgConfig::wbc-solvers-${optional_solver})
+        list(APPEND WBC_SOLVER_TARGETS PkgConfig::wbc-solvers-${optional_solver})
+        string(TOUPPER "${optional_solver}" optional_solver_upper)
+        target_compile_definitions(
+                mitcontrollernode PRIVATE WBC_HAS_${optional_solver_upper})
+    endif()
+endforeach()
+
 target_link_libraries(mitcontrollernode
         PkgConfig::wbc-core
         PkgConfig::wbc-robot_models-pinocchio
-        PkgConfig::wbc-solvers-eiquadprog
-        PkgConfig::wbc-solvers-qpswift
-        PkgConfig::wbc-solvers-proxqp
-        PkgConfig::wbc-solvers-qpoases
-        PkgConfig::wbc-solvers-osqp
+        ${WBC_SOLVER_TARGETS}
         PkgConfig::wbc-scenes-acceleration_reduced_tsid
         PkgConfig::wbc-scenes-acceleration_tsid
         PkgConfig::wbc-controllers
         PkgConfig::wbc-types
-        OsqpEigen::OsqpEigen
-        PkgConfig::wbc-solvers-hpipm
 )
 
 if (ROBOT_NAME STREQUAL "ulab")
@@ -215,7 +246,7 @@ else ()
 endif ()
 
 target_compile_options(mitcontrollernode PRIVATE -Wall -Wextra -Wpedantic -Werror)
-ament_target_dependencies(mitcontrollernode Eigen3 common interfaces rclcpp)
+target_ros_dependencies(mitcontrollernode Eigen3 common interfaces rclcpp)
 target_link_libraries(mitcontrollernode acados fmt::fmt)
 target_include_directories(
         mitcontrollernode
@@ -231,7 +262,7 @@ target_include_directories(
 add_executable(testSwingTrajectoryControllerNode src/testSwingTrajectoryControllerNode.cpp
         src/SwingTrajectory.cpp)
 
-ament_target_dependencies(testSwingTrajectoryControllerNode Eigen3 interfaces rclcpp
+target_ros_dependencies(testSwingTrajectoryControllerNode Eigen3 interfaces rclcpp
         sensor_msgs geometry_msgs common)
 
 target_include_directories(
@@ -246,7 +277,7 @@ target_include_directories(
 
 add_executable(SysIDLegControllerNode src/system_identification/SysIDLegControllerNode.cpp src/system_identification/SysIDTrajectory.cpp)
 
-ament_target_dependencies(SysIDLegControllerNode Eigen3 interfaces rclcpp common)
+target_ros_dependencies(SysIDLegControllerNode Eigen3 interfaces rclcpp common)
 
 target_include_directories(
         SysIDLegControllerNode
@@ -260,7 +291,7 @@ target_include_directories(
 # ##############################################################################
 add_executable(log_cpu_power src/tools/log_cpu_power.cpp)
 
-ament_target_dependencies(log_cpu_power
+target_ros_dependencies(log_cpu_power
         rclcpp
         std_msgs
 )

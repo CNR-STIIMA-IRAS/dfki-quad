@@ -1,0 +1,10 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=@QPOASES_PC_LIBDIR@
+includedir=@qpOASES_INCLUDE_DIR@
+
+Name: qpOASES
+Description: Online active-set strategy quadratic programming solver
+Version: @qpOASES_VERSION@
+Libs: -L${libdir} -lqpOASES_pic
+Cflags: -I${includedir}

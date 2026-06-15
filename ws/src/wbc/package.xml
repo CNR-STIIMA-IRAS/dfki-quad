@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>wbc</name>
+  <version>0.2.0</version>
+  <description>ARC-OPT whole-body control library.</description>
+  <maintainer email="rkumar@dfki.de">rkumar</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>boost</depend>
+  <depend>console_bridge</depend>
+  <depend>eigen</depend>
+  <depend>pinocchio</depend>
+  <depend>qpOASES</depend>
+  <depend>urdfdom</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

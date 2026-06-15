@@ -67,7 +67,7 @@ MITController::MITController(const std::string &nodeName)
   this->declare_parameter<std::string>("mpc_solver", "PARTIAL_CONDENSING_HPIPM");
   this->declare_parameter<int>("mpc_condensed_size", MPC_PREDICTION_HORIZON / 2);
   this->declare_parameter<std::string>("mpc_hpipm_mode", "SPEED");
-  this->declare_parameter<std::string>("wbc.arc_opt.solver", "EiquadprogSolver");
+  this->declare_parameter<std::string>("wbc.arc_opt.solver", "QPOasesSolver");
   this->declare_parameter<std::string>("wbc.arc_opt.scene", "AccelerationSceneReducedTSID");
   this->declare_parameter<int>("mpc_warm_start", 1);
   this->declare_parameter<double>("mpc_solver_tolerances", -1.0);

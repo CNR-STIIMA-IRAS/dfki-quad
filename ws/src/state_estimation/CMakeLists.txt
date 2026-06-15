@@ -14,6 +14,7 @@ option(WITH_VICON "Use Vicon" ON)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(interfaces REQUIRED)
+find_package(pinocchio REQUIRED)
 find_package(common REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
@@ -25,9 +26,16 @@ endif ()
 # Add the executable for the C++ node
 add_executable(state_estimation src/state_estimation_node.cpp src/contact_detection.cpp src/kalman_filter.cpp)
 
-ament_target_dependencies(state_estimation rclcpp sensor_msgs interfaces inekf std_srvs)
+target_link_libraries(
+    state_estimation
+    rclcpp::rclcpp
+    sensor_msgs::sensor_msgs
+    interfaces::interfaces
+    inekf::inekf
+    std_srvs::std_srvs
+)
 if (WITH_VICON)
-    ament_target_dependencies(state_estimation vicon_receiver)
+    target_link_libraries(state_estimation ${vicon_receiver_TARGETS})
     target_compile_definitions(state_estimation PUBLIC WITH_VICON)
 endif ()
 

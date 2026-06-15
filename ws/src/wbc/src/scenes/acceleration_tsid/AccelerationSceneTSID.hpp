@@ -1,0 +1,91 @@
+#ifndef WBCACCELERATIONSCENETSID_HPP
+#define WBCACCELERATIONSCENETSID_HPP
+
+#include "../../core/Scene.hpp"
+#include "../../types/Wrench.hpp"
+
+namespace wbc{
+
+/**
+ * @brief Acceleration-based implementation of the WBC Scene. It sets up and solves the following problem:
+ *  \f[
+ *        \begin{array}{ccc}
+ *        minimize &  \| \mathbf{J}_w\ddot{\mathbf{q}} - \dot{\mathbf{v}}_d + \dot{\mathbf{J}}\dot{\mathbf{q}}\|_2\\
+ *        \mathbf{\ddot{q}},\mathbf{\tau},\mathbf{f} & & \\
+ *           s.t.  & \mathbf{H}\mathbf{\ddot{q}} - \mathbf{S}^T\mathbf{\tau} - \mathbf{J}_c^T\mathbf{f} = -\mathbf{h} & \\
+ *                 & \mathbf{J}_{c,i}\mathbf{\ddot{q}} = -\dot{\mathbf{J}}_{c,i}\dot{\mathbf{q}}, \, \forall i& \\
+ *                 & \mathbf{\tau}_m \leq \mathbf{\tau} \leq \mathbf{\tau}_M& \\
+ *        \end{array}
+ *  \f]
+ * \f$\ddot{\mathbf{q}}\f$ - Vector of robot joint accelerations<br>
+ * \f$\mathbf{v}_{d}\f$ - Desired spatial accelerations of all tasks stacked in a vector<br>
+ * \f$\mathbf{J}\f$ - Task Jacobians of all tasks stacked in a single matrix<br>
+ * \f$\mathbf{J}_w = \mathbf{W}\mathbf{J}\f$ - Weighted task Jacobians<br>
+ * \f$\mathbf{W}\f$ - Diagonal task weight matrix<br>
+ * \f$\mathbf{H}\f$ - Joint space inertia matrix<br>
+ * \f$\mathbf{S}\f$ - Selection matrix<br>
+ * \f$\mathbf{\tau}\f$ - actuation forces/torques<br>
+ * \f$\mathbf{h}\f$ - bias forces/torques<br>
+ * \f$\mathbf{f}\f$ - external forces<br>
+ * \f$\mathbf{J}_{c,i}\f$ - Contact Jacobian of i-th contact point<br>
+ * \f$\dot{\mathbf{J}}\dot{\mathbf{q}}\f$ - Acceleration bias<br>
+ * \f$\mathbf{\tau}_m,\mathbf{\tau}_M\f$ - Joint force/torque limits<br>
+ *
+ * The implementation is close to the task-space-inverse dynamics (TSID) method: https://andreadelprete.github.io/teaching/tsid/1_tsid_theory.pdf.
+ * It computes the required joint space accelerations \f$\ddot{\mathbf{q}}\f$, torques \f$\mathbf{\tau}\f$ and contact wrenches \f$\mathbf{f}\f$, required to achieve the given task space
+ * accelerations \f$\mathbf{v}_{d}\f$ under consideration of the equations of motion (eom), rigid contacts and joint force/torque limits. Note that onyl a single hierarchy level is allowed here,
+ * prioritization can be achieved by assigning suitable task weights \f$\mathbf{W}\f$.
+ */
+class AccelerationSceneTSID : public Scene{
+protected:
+    static SceneRegistry<AccelerationSceneTSID> reg;
+
+    // Helper variables
+    std::vector<types::Contact> contacts;
+    Eigen::VectorXd robot_acc, solver_output_acc;
+    std::vector< TaskPtr > tasks;
+    std::vector< ConstraintPtr > constraints;
+    HierarchicalQP hqp;
+    bool configured;
+    types::JointCommand solver_output_joints;
+    uint dim_contact;
+
+
+    bool contactsHaveChanged(const std::vector<types::Contact>& old_contacts, const std::vector<types::Contact>& new_contacts){
+        if(old_contacts.size() != new_contacts.size())
+            return true;
+        for(uint i = 0; i < old_contacts.size(); i++){
+            if(old_contacts[i].active != new_contacts[i].active)
+                return true;
+        }
+        return false;
+    }
+
+public:
+    AccelerationSceneTSID(RobotModelPtr robot_model, QPSolverPtr solver, const double dt, uint dim_contact=3);
+    virtual ~AccelerationSceneTSID(){
+    }
+
+    /**
+     * @brief Configure the WBC scene. Create tasks and sort them by priority given the task config
+     * @param tasks Tasks used in optimization function. Size has to be > 0. All tasks have to be valid. See tasks and TaskConfig.hpp for more details.
+     */
+    virtual bool configure(const std::vector<TaskPtr> &tasks);
+
+    /**
+     * @brief Update the wbc scene and return the (updated) optimization problem
+     * @param ctrl_output Control solution that fulfill the given tasks as good as possible
+     */
+    virtual const HierarchicalQP& update();
+
+    /**
+     * @brief Solve the given optimization problem
+     * @return Solver output as joint acceleration command
+     */
+    virtual const types::JointCommand& solve(const HierarchicalQP& hqp);
+
+};
+
+} // namespace wbc
+
+#endif

@@ -23,5 +23,14 @@
 	path = ws/deps/acados
 	url = https://github.com/acados/acados
 [submodule "ws/src/unitree_go"]
-	path = ws/src/unitree_go
+	path = ws/deps/unitree_go
 	url = https://github.com/Unitree-Go2-Robot/unitree_go.git
+[submodule "ws/deps/osqp"]
+	path = ws/deps/osqp
+	url = https://github.com/osqp/osqp.git
+[submodule "ws/deps/osqp-eigen"]
+	path = ws/deps/osqp-eigen
+	url = https://github.com/gbionics/osqp-eigen
+[submodule "ws/deps/qpOASES"]
+	path = ws/deps/qpOASES
+	url = https://github.com/coin-or/qpOASES

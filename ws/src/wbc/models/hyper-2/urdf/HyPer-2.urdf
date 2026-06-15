@@ -1,0 +1,1509 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+
+<!-- Base -->
+
+<robot
+  name="HyPer-2">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="-0.0049497 -5.046E-06 0.10751"
+        rpy="0 0 0" />
+      <mass
+        value="3.4851" />
+      <inertia
+        ixx="0.025263"
+        ixy="-1.5464E-06"
+        ixz="-0.00027733"
+        iyy="0.021786"
+        iyz="-1.3929E-06"
+        izz="0.013404" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/base_link.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.55 0.30 0.52 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.01 0 0.12" rpy="0 0 0" />
+      <geometry>
+        <box size="0.15 0.22 0.34"/>
+      </geometry>
+      <drake:proximity_properties>
+         <drake:compliant_hydroelastic/>
+         <drake:hydroelastic_modulus value="1e7"/>
+         <drake:hunt_crossley_dissipation value="50.0"/>
+         <drake:mu_dynamic value="4.0"/>
+         <drake:mu_static value="4.0"/>
+     </drake:proximity_properties>
+    </collision> 
+  </link>
+  <link
+    name="link_ll">
+    <inertial>
+      <origin
+        xyz="9.5587E-05 -0.00010008 -0.020806"
+        rpy="0 0 0" />
+      <mass
+        value="0.56995" />
+      <inertia
+        ixx="0.00038294"
+        ixy="-1.2206E-06"
+        ixz="9.3953E-07"
+        iyy="0.00038306"
+        iyz="-9.9716E-07"
+        izz="0.00062404" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.55 0.30 0.52 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_ll"
+    type="fixed">
+    <origin
+      xyz="0 0.062785 -0.0090587"
+      rpy="-2.8798 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="link_ll" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="link_lr">
+    <inertial>
+      <origin
+        xyz="0.00010008 9.5587E-05 -0.020806"
+        rpy="0 0 0" />
+      <mass
+        value="0.56995" />
+      <inertia
+        ixx="0.00038306"
+        ixy="1.2206E-06"
+        ixz="9.9716E-07"
+        iyy="0.00038294"
+        iyz="9.3953E-07"
+        izz="0.00062404" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_lr.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.55 0.30 0.52 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_lr.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_lr"
+    type="fixed">
+    <origin
+      xyz="0 -0.062785 -0.0090587"
+      rpy="2.8798 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="link_lr" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="link_al">
+    <inertial>
+      <origin
+        xyz="5.0627E-05 -2.3807E-05 -0.020806"
+        rpy="0 0 0" />
+      <mass
+        value="0.56995" />
+      <inertia
+        ixx="0.00038306"
+        ixy="1.2206E-06"
+        ixz="9.9716E-07"
+        iyy="0.00038294"
+        iyz="9.3953E-07"
+        izz="0.00062404" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al.obj" />
+      </geometry>
+      <material
+        name="">        
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_al"
+    type="fixed">
+    <origin
+      xyz="4.9454E-05 0.06338 0.21184"
+      rpy="-0.2618 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="link_al" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="link_ar">
+    <inertial>
+      <origin
+        xyz="5.2633E-05 1.8964E-05 -0.020806"
+        rpy="0 0 0" />
+      <mass
+        value="0.56995" />
+      <inertia
+        ixx="0.00038178"
+        ixy="6.069E-08"
+        ixz="4.0755E-08"
+        iyy="0.00038422"
+        iyz="1.3694E-06"
+        izz="0.00062404" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ar.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ar.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_ar"
+    type="fixed">
+    <origin
+      xyz="-4.9454E-05 -0.06315 0.2119"
+      rpy="0.2618 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="link_ar" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="link_imu">
+    <inertial>
+      <origin
+        xyz="0.011968 0.001 0.00395"
+        rpy="0 0 0" />
+      <mass
+        value="0.0071358" />
+      <inertia
+        ixx="3.7692E-07"
+        ixy="5.5049E-23"
+        ixz="5.5355E-24"
+        iyy="8.8368E-07"
+        iyz="2.0343E-25"
+        izz="1.1864E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_IMU.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_IMU.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_IMU"
+    type="fixed">
+    <origin
+      xyz="0.02975 -0.001 0.0225"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="link_imu" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+
+  <!-- Left Leg -->
+
+  <link
+    name="link_ll_hip_1">
+    <inertial>
+      <origin
+        xyz="-0.053335 -0.0083084 0.048217"
+        rpy="0 0 0" />
+      <mass
+        value="0.85476" />
+      <inertia
+        ixx="0.00085744"
+        ixy="2.6252E-05"
+        ixz="0.00023667"
+        iyy="0.00069462"
+        iyz="3.8126E-05"
+        izz="0.00074041" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_hip_1.obj" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_hip_1.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_ll_hip_1"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="link_ll" />
+    <child
+      link="link_ll_hip_1" />
+    <axis
+      xyz="0 0.5 0.86603" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+  <link
+    name="link_ll_hip_2">
+    <inertial>
+      <origin
+        xyz="0.0027821 -1.5241E-08 -0.022811"
+        rpy="0 0 0" />
+      <mass
+        value="0.1356" />
+      <inertia
+        ixx="0.0001929"
+        ixy="-7.0465E-12"
+        ixz="5.8833E-07"
+        iyy="0.00011528"
+        iyz="3.2859E-12"
+        izz="8.5913E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_hip_2.obj" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_hip_2.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_ll_hip_2"
+    type="revolute">
+    <origin
+      xyz="0 0 0.099"
+      rpy="-1.0267 -0.2618 -1.5708" />
+    <parent
+      link="link_ll_hip_1" />
+    <child
+      link="link_ll_hip_2" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+  <link
+    name="link_ll_hip_3">
+    <inertial>
+      <origin
+        xyz="-0.058137 0.0086017 6.0062E-06"
+        rpy="0 0 0" />
+      <mass
+        value="4.073" />
+      <inertia
+        ixx="0.0040958"
+        ixy="0.00018109"
+        ixz="2.2766E-06"
+        iyy="0.00782"
+        iyz="1.0088E-06"
+        izz="0.0093532" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_hip_3.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.55 0.30 0.52 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_hip_3.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_ll_hip_3"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="1.5708 0.54409 1.5708" />
+    <parent
+      link="link_ll_hip_2" />
+    <child
+      link="link_ll_hip_3" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="53.0" velocity="24.0" /> <!-- AK10-9 v3 -->
+  </joint>
+  <link
+    name="link_ll_knee">
+    <inertial>
+      <origin
+        xyz="-0.086875 0.0060646 0.00014242"
+        rpy="0 0 0" />
+      <mass
+        value="0.70263" />
+      <inertia
+        ixx="0.00039992"
+        ixy="-0.00021494"
+        ixz="-4.9055E-08"
+        iyy="0.0039059"
+        iyz="1.62E-08"
+        izz="0.0039486" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_knee.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.55 0.30 0.52 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_knee.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_ll_knee"
+    type="revolute">
+    <origin
+      xyz="-0.3 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="link_ll_hip_3" />
+    <child
+      link="link_ll_knee" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="53.0" velocity="24.0" /> <!-- AK10-9 v3 -->
+  </joint>
+  <link
+    name="link_ll_ankle_1">
+    <inertial>
+      <origin
+        xyz="-1.569E-08 -8.394E-09 -2.6083E-08"
+        rpy="0 0 0" />
+      <mass
+        value="0.026909" />
+      <inertia
+        ixx="1.7104E-06"
+        ixy="1.1785E-13"
+        ixz="-6.7096E-14"
+        iyy="1.1753E-06"
+        iyz="9.7534E-14"
+        izz="1.0688E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_ankle_1.obj" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_ankle_1.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_ll_ankle_1"
+    type="revolute">
+    <origin
+      xyz="-0.28 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="link_ll_knee" />
+    <child
+      link="link_ll_ankle_1" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+  <link
+    name="link_ll_ankle_2">
+    <inertial>
+      <origin
+        xyz="-0.027632 6.1687E-06 -0.0029721"
+        rpy="0 0 0" />
+      <mass
+        value="0.13224" />
+      <inertia
+        ixx="3.9324E-05"
+        ixy="-2.9874E-09"
+        ixz="6.8428E-06"
+        iyy="3.4504E-05"
+        iyz="-4.2816E-09"
+        izz="2.6868E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_ankle_2.obj" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_ankle_2.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_ll_ankle_2"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="-1.5708 0 0" />
+    <parent
+      link="link_ll_ankle_1" />
+    <child
+      link="link_ll_ankle_2" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+  <link
+    name="link_ll_foot">
+    <inertial>
+      <origin
+        xyz="0.015001 -1.5762E-05 0.0074206"
+        rpy="0 0 0" />
+      <mass
+        value="0.14145" />
+      <inertia
+        ixx="0.00011346"
+        ixy="8.4742E-08"
+        ixz="1.662E-06"
+        iyy="0.00026587"
+        iyz="-7.5323E-09"
+        izz="0.00037026" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_foot.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.55 0.30 0.52 1" />
+      </material>
+    </visual>
+    <collision name="left_foot_collision">
+      <origin xyz="0.02 0.0 0.003" rpy="0 0 0" />
+      <geometry>
+        <box size="0.16 0.1 0.01"/>
+      </geometry>      
+      <drake:proximity_properties>
+         <drake:compliant_hydroelastic/>
+         <drake:hydroelastic_modulus value="3e5"/>
+         <drake:hunt_crossley_dissipation value="500.0"/>
+         <drake:mu_dynamic value="4.0"/>
+         <drake:mu_static value="4.0"/>
+      </drake:proximity_properties>
+    </collision>
+  </link>
+  <joint
+    name="joint_ll_foot"
+    type="fixed">
+    <origin
+      xyz="-0.045748 0 0"
+      rpy="3.1416 -1.5708 0" />
+    <parent
+      link="link_ll_ankle_2" />
+    <child
+      link="link_ll_foot" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+
+  <!-- Right Leg -->
+
+  <link
+    name="link_lr_hip_1">
+    <inertial>
+      <origin
+        xyz="-0.053324 0.0083897 0.048219"
+        rpy="0 0 0" />
+      <mass
+        value="0.85478" />
+      <inertia
+        ixx="0.00085748"
+        ixy="-2.6046E-05"
+        ixz="0.00023699"
+        iyy="0.00069453"
+        iyz="-3.6037E-05"
+        izz="0.00074038" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_hip_1.obj" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_hip_1.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_lr_hip_1"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="link_lr" />
+    <child
+      link="link_lr_hip_1" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+  <link
+    name="link_lr_hip_2">
+    <inertial>
+      <origin
+        xyz="0.0027821 -1.5241E-08 -0.022811"
+        rpy="0 0 0" />
+      <mass
+        value="0.1356" />
+      <inertia
+        ixx="0.0001929"
+        ixy="-7.0465E-12"
+        ixz="5.8833E-07"
+        iyy="0.00011528"
+        iyz="3.2859E-12"
+        izz="8.5913E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_hip_2.obj" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_hip_2.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_lr_hip_2"
+    type="revolute">
+    <origin
+      xyz="0 0 0.099"
+      rpy="-1.0267 0.2618 -1.5708" />
+    <parent
+      link="link_lr_hip_1" />
+    <child
+      link="link_lr_hip_2" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+  <link
+    name="link_lr_hip_3">
+    <inertial>
+      <origin
+        xyz="-0.058137 0.0086017 6.0062E-06"
+        rpy="0 0 0" />
+      <mass
+        value="4.073" />
+      <inertia
+        ixx="0.0040958"
+        ixy="0.00018109"
+        ixz="2.2766E-06"
+        iyy="0.00782"
+        iyz="1.0088E-06"
+        izz="0.0093532" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_hip_3.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.55 0.30 0.52 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_hip_3.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_lr_hip_3"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="1.5708 0.54409 1.5708" />
+    <parent
+      link="link_lr_hip_2" />
+    <child
+      link="link_lr_hip_3" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="53.0" velocity="24.0" /> <!-- AK10-9 v3 -->
+  </joint>
+  <link
+    name="link_lr_knee">
+    <inertial>
+      <origin
+        xyz="-0.086875 0.0060646 0.00014242"
+        rpy="0 0 0" />
+      <mass
+        value="0.70263" />
+      <inertia
+        ixx="0.00039992"
+        ixy="-0.00021494"
+        ixz="-4.9055E-08"
+        iyy="0.0039059"
+        iyz="1.62E-08"
+        izz="0.0039486" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_knee.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.55 0.30 0.52 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_knee.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_lr_knee"
+    type="revolute">
+    <origin
+      xyz="-0.3 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="link_lr_hip_3" />
+    <child
+      link="link_lr_knee" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="53.0" velocity="24.0" /> <!-- AK10-9 v3 -->
+  </joint>
+  <link
+    name="link_lr_ankle_1">
+    <inertial>
+      <origin
+        xyz="-1.569E-08 -8.394E-09 -2.6083E-08"
+        rpy="0 0 0" />
+      <mass
+        value="0.026909" />
+      <inertia
+        ixx="1.7104E-06"
+        ixy="1.1785E-13"
+        ixz="-6.7096E-14"
+        iyy="1.1753E-06"
+        iyz="9.7534E-14"
+        izz="1.0688E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_ankle_1.obj" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_ankle_1.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_lr_ankle_1"
+    type="revolute">
+    <origin
+      xyz="-0.28 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="link_lr_knee" />
+    <child
+      link="link_lr_ankle_1" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+  <link
+    name="link_lr_ankle_2">
+    <inertial>
+      <origin
+        xyz="-0.027632 6.1687E-06 -0.0029721"
+        rpy="0 0 0" />
+      <mass
+        value="0.13224" />
+      <inertia
+        ixx="3.9324E-05"
+        ixy="-2.9874E-09"
+        ixz="6.8428E-06"
+        iyy="3.4504E-05"
+        iyz="-4.2816E-09"
+        izz="2.6868E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_ankle_2.obj" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_ankle_2.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_lr_ankle_2"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="-1.5708 0 0" />
+    <parent
+      link="link_lr_ankle_1" />
+    <child
+      link="link_lr_ankle_2" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+  <link
+    name="link_lr_foot">
+    <inertial>
+      <origin
+        xyz="0.015001 -1.5762E-05 0.0074206"
+        rpy="0 0 0" />
+      <mass
+        value="0.14145" />
+      <inertia
+        ixx="0.00011346"
+        ixy="8.4742E-08"
+        ixz="1.662E-06"
+        iyy="0.00026587"
+        iyz="-7.5323E-09"
+        izz="0.00037026" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_ll_foot.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.55 0.30 0.52 1" />
+      </material>
+    </visual>
+    <collision name="right_foot_collision">
+      <origin xyz="0.02 0.0 0.003" rpy="0 0 0" />
+      <geometry>
+        <box size="0.16 0.1 0.01"/>
+      </geometry>      
+      <drake:proximity_properties>
+         <drake:compliant_hydroelastic/>
+         <drake:hydroelastic_modulus value="3e5"/>
+         <drake:hunt_crossley_dissipation value="500.0"/>
+         <drake:mu_dynamic value="4.0"/>
+         <drake:mu_static value="4.0"/>
+     </drake:proximity_properties>
+    </collision>
+  </link>
+  <joint
+    name="joint_lr_foot"
+    type="fixed">
+    <origin
+      xyz="-0.045748 0 0"
+      rpy="3.1416 -1.5708 0" />
+    <parent
+      link="link_lr_ankle_2" />
+    <child
+      link="link_lr_foot" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+
+  <!-- Left Arm -->
+
+  <link
+    name="link_al_shoulder_1">
+    <inertial>
+      <origin
+        xyz="-0.064343 -2.5008E-06 0.058576"
+        rpy="0 0 0" />
+      <mass
+        value="0.87866" />
+      <inertia
+        ixx="0.00099552"
+        ixy="-1.0622E-07"
+        ixz="0.00011635"
+        iyy="0.0007547"
+        iyz="-5.0042E-08"
+        izz="0.00069759" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_shoulder_1.obj" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_shoulder_1.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_al_shoulder_1"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.0045"
+      rpy="0 0 0" />
+    <parent
+      link="link_al" />
+    <child
+      link="link_al_shoulder_1" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+  <link
+    name="link_al_shoulder_2">
+    <inertial>
+      <origin
+        xyz="-0.0025947 -0.00010072 0.057942"
+        rpy="0 0 0" />
+      <mass
+        value="0.64923" />
+      <inertia
+        ixx="0.00070609"
+        ixy="-1.1306E-06"
+        ixz="7.7384E-07"
+        iyy="0.00043205"
+        iyz="-1.1349E-06"
+        izz="0.00042772" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_shoulder_2.obj" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_shoulder_2.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_al_shoulder_2"
+    type="revolute">
+    <origin
+      xyz="-0.062 0 0.074"
+      rpy="-1.5708 -1.309 -1.5708" />
+    <parent
+      link="link_al_shoulder_1" />
+    <child
+      link="link_al_shoulder_2" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+  <link
+    name="link_al_shoulder_3">
+    <inertial>
+      <origin
+        xyz="-7.2403E-05 0.029887 0.041227"
+        rpy="0 0 0" />
+      <mass
+        value="0.98192" />
+      <inertia
+        ixx="0.0027097"
+        ixy="4.8464E-07"
+        ixz="-7.2071E-07"
+        iyy="0.00073093"
+        iyz="-0.00011545"
+        izz="0.00321" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_shoulder_3.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_shoulder_3.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_al_shoulder_3"
+    type="revolute">
+    <origin
+      xyz="0.01785 0 0.062"
+      rpy="0 -1.5708 3.1416" />
+    <parent
+      link="link_al_shoulder_2" />
+    <child
+      link="link_al_shoulder_3" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+  <link
+    name="link_al_elbow">
+    <inertial>
+      <origin
+        xyz="-2.3857E-17 0.079799 -5.5511E-17"
+        rpy="0 0 0" />
+      <mass
+        value="0.15622" />
+      <inertia
+        ixx="0.00034382"
+        ixy="-1.1975E-18"
+        ixz="5.9433E-20"
+        iyy="2.4186E-05"
+        iyz="4.862E-19"
+        izz="0.00036403" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_elbow.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_elbow.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_al_elbow"
+    type="revolute">
+    <origin
+      xyz="0 0.2 0.06595"
+      rpy="0 0 0" />
+    <parent
+      link="link_al_shoulder_3" />
+    <child
+      link="link_al_elbow" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+
+  <!-- Right Arm -->
+
+  <link
+    name="link_ar_shoulder_1">
+    <inertial>
+      <origin
+        xyz="-0.064343 -2.5008E-06 0.058576"
+        rpy="0 0 0" />
+      <mass
+        value="0.87866" />
+      <inertia
+        ixx="0.00099552"
+        ixy="-1.0622E-07"
+        ixz="0.00011635"
+        iyy="0.0007547"
+        iyz="-5.0042E-08"
+        izz="0.00069759" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_shoulder_1.obj" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_shoulder_1.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_ar_shoulder_1"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.0045"
+      rpy="0 0 0" />
+    <parent
+      link="link_ar" />
+    <child
+      link="link_ar_shoulder_1" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+  <link
+    name="link_ar_shoulder_2">
+    <inertial>
+      <origin
+        xyz="-0.0025947121097471 -0.00010072103688671 0.0579420547922572"
+        rpy="0 0 0" />
+      <mass
+        value="0.649231830460124" />
+      <inertia
+        ixx="0.00070608806415512"
+        ixy="-1.13058173121503E-06"
+        ixz="7.73838520899836E-07"
+        iyy="0.000432051165794064"
+        iyz="-1.13488707847363E-06"
+        izz="0.000427716106388763" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_shoulder_2.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_shoulder_2.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_ar_shoulder_2"
+    type="revolute">
+    <origin
+      xyz="-0.062 0 0.074"
+      rpy="1.5708 -1.309 1.5708" />
+    <parent
+      link="link_ar_shoulder_1" />
+    <child
+      link="link_ar_shoulder_2" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+  <link
+    name="link_ar_shoulder_3">
+    <inertial>
+      <origin
+        xyz="-7.2653E-05 0.029888 0.041227"
+        rpy="0 0 0" />
+      <mass
+        value="0.98191" />
+      <inertia
+        ixx="0.0027097"
+        ixy="4.8455E-07"
+        ixz="-7.2076E-07"
+        iyy="0.00073093"
+        iyz="-0.00011545"
+        izz="0.00321" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_shoulder_3.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_shoulder_3.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_ar_shoulder_3"
+    type="revolute">
+    <origin
+      xyz="0.01785 0 0.062"
+      rpy="0 1.5708 0" />
+    <parent
+      link="link_ar_shoulder_2" />
+    <child
+      link="link_ar_shoulder_3" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+  <link
+    name="link_ar_elbow">
+    <inertial>
+      <origin
+        xyz="-5.3433E-17 0.079799 -7.7716E-16"
+        rpy="0 0 0" />
+      <mass
+        value="0.15622" />
+      <inertia
+        ixx="0.00034382"
+        ixy="-1.1142E-18"
+        ixz="5.4552E-20"
+        iyy="2.4186E-05"
+        iyz="4.9594E-19"
+        izz="0.00036403" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_elbow.obj" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <!--collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://hyper_2_description/meshes/link_al_elbow.obj" />
+      </geometry>
+    </collision-->
+  </link>
+  <joint
+    name="joint_ar_elbow"
+    type="revolute">
+    <origin
+      xyz="0 0.2 0.06595"
+      rpy="0 0 0" />
+    <parent
+      link="link_ar_shoulder_3" />
+    <child
+      link="link_ar_elbow" />
+    <axis
+      xyz="0 0 1" />
+    <limit lower="-3.141" upper="3.141" effort="22.0" velocity="40.0" /> <!-- AK80-9 v3-->
+  </joint>
+  
+</robot>

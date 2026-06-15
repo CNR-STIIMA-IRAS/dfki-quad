@@ -40,12 +40,21 @@ else ()
     MESSAGE(WARNING "No default constructor!")
 endif ()
 if (NOT WITHOUT_DRAKE)
-    ament_target_dependencies(quad_model drake Eigen3 interfaces rclcpp)
+    target_link_libraries(quad_model PUBLIC
+            drake::drake
+            Eigen3::Eigen
+            interfaces::interfaces__rosidl_generator_cpp
+            rclcpp::rclcpp)
 endif ()
-ament_target_dependencies(quad_model_symbolic interfaces rclcpp)
-target_link_libraries(quad_model_symbolic Eigen3::Eigen)
-ament_target_dependencies(quad_model_pino interfaces rclcpp)
-target_link_libraries(quad_model_pino Eigen3::Eigen pinocchio)
+target_link_libraries(quad_model_symbolic PUBLIC
+        Eigen3::Eigen
+        interfaces::interfaces__rosidl_generator_cpp
+        rclcpp::rclcpp)
+target_link_libraries(quad_model_pino PUBLIC
+        Eigen3::Eigen
+        interfaces::interfaces__rosidl_generator_cpp
+        pinocchio::pinocchio
+        rclcpp::rclcpp)
 
 target_include_directories(
         quad_model_symbolic
@@ -72,6 +81,7 @@ if (NOT WITHOUT_DRAKE)
 endif ()
 ament_export_targets(quad_model_symbolic HAS_LIBRARY_TARGET)
 ament_export_targets(quad_model_pino HAS_LIBRARY_TARGET)
+ament_export_dependencies(Eigen3 interfaces pinocchio rclcpp)
 
 install(DIRECTORY include/common DESTINATION include)
 
@@ -107,8 +117,13 @@ install(
 if (NOT WITHOUT_DRAKE)
     add_executable(model_test src/tests/model_test.cpp)
 
-    ament_target_dependencies(model_test interfaces drake rclcpp)
-    target_link_libraries(model_test Eigen3::Eigen quad_model_pino quad_model_symbolic)
+    target_link_libraries(model_test PRIVATE
+            drake::drake
+            Eigen3::Eigen
+            interfaces::interfaces__rosidl_generator_cpp
+            quad_model_pino
+            quad_model_symbolic
+            rclcpp::rclcpp)
     target_include_directories(
             model_test
             PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -129,4 +144,3 @@ install(PROGRAMS scripts/plot_trajectory_bagfile.py DESTINATION lib/${PROJECT_NA
 install(DIRECTORY include model launch config DESTINATION share/${PROJECT_NAME})
 
 ament_package()
-

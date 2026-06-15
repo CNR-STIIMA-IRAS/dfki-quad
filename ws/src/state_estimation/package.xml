@@ -16,6 +16,7 @@
   <depend>interfaces</depend>
   <depend>rclcpp</depend>
   <depend>common</depend>
+  <depend>pinocchio</depend>
   <depend>sensor_msgs</depend>
   <depend>rclpy</depend>
 

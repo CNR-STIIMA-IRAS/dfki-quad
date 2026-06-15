@@ -86,12 +86,13 @@ void QuadModelPino::UpdateModel() {
   pinocchio::computeTotalMass(model_, data_);
   pinocchio::centerOfMass(model_, data_);
   pinocchio::ccrba(model_, data_, default_q_vec_, init_v_config);
-  dynamic_parameters_.segment<10>(0) = model_.inertias[model_.frames[base_link_idx_].parent].toDynamicParameters();
+  dynamic_parameters_.segment<10>(0) =
+      model_.inertias[model_.frames[base_link_idx_].parentJoint].toDynamicParameters();
   for (unsigned int leg_idx = 0; leg_idx < ModelInterface::N_LEGS; leg_idx++) {
     for (unsigned int joint_indx = 0; joint_indx < ModelInterface::N_JOINTS_PER_LEG; joint_indx++) {
       dynamic_parameters_.segment<10>((1 + leg_idx * ModelInterface::N_JOINTS_PER_LEG + joint_indx) * 10) =
-          model_.inertias[model_.frames[joint_frame_indxs_[leg_idx][joint_indx]].parent].toDynamicParameters();
-      std::cout << "Inertia element idx: " << model_.frames[joint_frame_indxs_[leg_idx][joint_indx]].parent
+          model_.inertias[model_.frames[joint_frame_indxs_[leg_idx][joint_indx]].parentJoint].toDynamicParameters();
+      std::cout << "Inertia element idx: " << model_.frames[joint_frame_indxs_[leg_idx][joint_indx]].parentJoint
                 << std::endl;
     }
   }
@@ -305,7 +306,7 @@ void QuadModelPino::getLegInertia(
   // set base_link inertia to zero
   Eigen::Matrix3d zero;
   zero.setZero();
-  model.inertias[model.frames[base_link_idx_].parent].inertia() = pinocchio::Symmetric3(zero);
+  model.inertias[model.frames[base_link_idx_].parentJoint].inertia() = pinocchio::Symmetric3(zero);
   // compute inertias
   pinocchio::crba(model, data, q);
   // now that base_link inertia is zero Ycrb[1] should output total inertia in base frame
@@ -504,20 +505,21 @@ void QuadModelPino::ComputeRegressorMatrix(
   }
   // Rearrange cols
   // First 10 should be correct
-  regressor.leftCols<10>() = regressor_lines_sorted.middleCols<10>((model_.frames[base_link_idx_].parent - 1) * 10);
+  regressor.leftCols<10>() =
+      regressor_lines_sorted.middleCols<10>((model_.frames[base_link_idx_].parentJoint - 1) * 10);
   for (unsigned int leg_idx = 0; leg_idx < ModelInterface::N_LEGS; leg_idx++) {
     for (unsigned int joint_indx = 0; joint_indx < ModelInterface::N_JOINTS_PER_LEG; joint_indx++) {
       regressor.block<ModelInterface::NUM_JOINTS + 6, 10>(
           0, (1 + leg_idx * ModelInterface::N_JOINTS_PER_LEG + joint_indx) * 10) =
           regressor_lines_sorted.block<ModelInterface::NUM_JOINTS + 6, 10>(
-              0, (model_.frames[joint_frame_indxs_[leg_idx][joint_indx]].parent - 1) * 10);
+              0, (model_.frames[joint_frame_indxs_[leg_idx][joint_indx]].parentJoint - 1) * 10);
     }
   }
 }
 
 void QuadModelPino::SetInertia(const Eigen::Matrix3d& inertia_tensor) {
   // Has to be symmetric!
-  model_.inertias[model_.frames[base_link_idx_].parent].inertia() = pinocchio::Symmetric3(inertia_tensor);
+  model_.inertias[model_.frames[base_link_idx_].parentJoint].inertia() = pinocchio::Symmetric3(inertia_tensor);
   UpdateModel();
 }
 void QuadModelPino::SetInertia(const int row, const int column, const double value) {
@@ -528,19 +530,19 @@ void QuadModelPino::SetInertia(const int row, const int column, const double val
   if (column > 1 || row > 1) {
     indx++;
   }
-  model_.inertias[model_.frames[base_link_idx_].parent].inertia().data()(indx) = value;
+  model_.inertias[model_.frames[base_link_idx_].parentJoint].inertia().data()(indx) = value;
   UpdateModel();
 }
 void QuadModelPino::SetMass(double mass) {
-  model_.inertias[model_.frames[base_link_idx_].parent].mass() = mass;
+  model_.inertias[model_.frames[base_link_idx_].parentJoint].mass() = mass;
   UpdateModel();
 }
 void QuadModelPino::SetCOM(const Eigen::Vector3d& com) {
-  model_.inertias[model_.frames[base_link_idx_].parent].lever() = com;
+  model_.inertias[model_.frames[base_link_idx_].parentJoint].lever() = com;
   UpdateModel();
 }
 void QuadModelPino::SetCOM(const int idx, const double val) {
-  model_.inertias[model_.frames[base_link_idx_].parent].lever()(idx) = val;
+  model_.inertias[model_.frames[base_link_idx_].parentJoint].lever()(idx) = val;
   UpdateModel();
 }
 

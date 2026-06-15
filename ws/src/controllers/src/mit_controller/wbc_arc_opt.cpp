@@ -1,12 +1,22 @@
 #include "mit_controller/wbc_arc_opt.hpp"
 
+#ifdef WBC_HAS_EIQUADPROG
 #include <wbc/solvers/eiquadprog/EiquadprogSolver.hpp>
+#endif
+#ifdef WBC_HAS_HPIPM
 #include <wbc/solvers/hpipm/HPIPMSolver.hpp>
+#endif
+#ifdef WBC_HAS_OSQP
 #include <wbc/solvers/osqp/OsqpSolver.hpp>
 #undef WARM_START  // Osqp header has some problematic defines
+#endif
+#ifdef WBC_HAS_PROXQP
 #include <wbc/solvers/proxqp/ProxQPSolver.hpp>
+#endif
 #include <wbc/solvers/qpoases/QPOasesSolver.hpp>
+#ifdef WBC_HAS_QPSWIFT
 #include <wbc/solvers/qpswift/QPSwiftSolver.hpp>  // Has to be here, as -fpermissive is triggered and only deactivated in this cpp
+#endif
 // are included here for consistency
 
 WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
@@ -49,10 +59,14 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
   }
 
   // Solver
-  if (solver == "EiquadprogSolver") {
+  if (false) {
+#ifdef WBC_HAS_EIQUADPROG
+  } else if (solver == "EiquadprogSolver") {
     auto solver = std::make_shared<wbc::EiquadprogSolver>();
     // No options
     wbc_solver_ = solver;
+#endif
+#ifdef WBC_HAS_PROXQP
   } else if (solver == "ProxQPSolver") {
     auto solver = std::make_shared<wbc::ProxQPSolver>();
     proxsuite::proxqp::Settings<double> solver_opts;
@@ -62,6 +76,7 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
     }
     solver->setOptions(solver_opts);
     wbc_solver_ = solver;
+#endif
   } else if (solver == "QPOasesSolver") {
     auto solver = std::make_shared<wbc::QPOASESSolver>();
     qpOASES::Options solver_opts;
@@ -72,6 +87,7 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
     solver_opts.printLevel = qpOASES::PL_NONE;
     solver->setOptions(solver_opts);
     wbc_solver_ = solver;
+#ifdef WBC_HAS_OSQP
   } else if (solver == "OSQPSolver") {
     auto solver = std::make_shared<wbc::OsqpSolver>();
     if (solver_tolerances >= 0.0) {
@@ -80,9 +96,13 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
     }
     solver->solver.settings()->setVerbosity(false);
     wbc_solver_ = solver;
+#endif
+#ifdef WBC_HAS_QPSWIFT
   } else if (solver == "QPSwiftSolver") {
     // Does not work in our case
     wbc_solver_ = std::make_shared<wbc::QPSwiftSolver>();
+#endif
+#ifdef WBC_HAS_HPIPM
   } else if (solver == "HPIPMSolver") {
     auto solver = std::make_shared<wbc::HPIPMSolver>();
     double tolerance = solver_tolerances;
@@ -93,6 +113,7 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
       }
     }
     wbc_solver_ = solver;
+#endif
   } else {
     throw std::runtime_error(fmt::format("Unknown wbc solver {0}", solver));
   }
