@@ -10,7 +10,7 @@ find_package(qpOASES CONFIG REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem serialization)
-if(BUILD_TESTING)
+if(WBC_BUILD_TESTING)
     find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 endif()
 if(NOT TARGET Boost::system)

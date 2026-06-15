@@ -1,5 +1,7 @@
 #include "mit_controller/wbc_arc_opt.hpp"
 
+#include <fmt/ranges.h>
+
 #ifdef WBC_HAS_EIQUADPROG
 #include <wbc/solvers/eiquadprog/EiquadprogSolver.hpp>
 #endif
@@ -134,7 +136,7 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
   wbc_com_task_ = std::make_shared<wbc::SpatialAccelerationTask>(
       wbc::TaskConfig("body_pose",
                       0,
-                      to_vector(com_pose_weight),  // vector: xyz, roll pitch yaw
+                      com_pose_weight,  // vector: xyz, roll pitch yaw
                       1),
       wbc_robot_model_,
       "base_link",
@@ -151,7 +153,7 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
     wbc_foot_contact_tasks_[feet_idx] =
         std::make_shared<wbc::ContactForceTask>(wbc::TaskConfig(fmt::format("foot_contact_{}", feet_idx),
                                                                 0,
-                                                                to_vector(foot_force_weight),  // 6: force, torque
+                                                                foot_force_weight,
                                                                 quad_state_->GetFeetContacts()[feet_idx]),
                                                 wbc_robot_model_,
                                                 "world");
@@ -164,7 +166,7 @@ WBCArcOPT::WBCArcOPT(std::unique_ptr<StateInterface> state,
     wbc_foot_pose_tasks_[feet_idx] = std::make_shared<wbc::SpatialAccelerationTask>(
         wbc::TaskConfig(fmt::format("foot_pose_{}", feet_idx),
                         0,
-                        to_vector(stack(foot_pose_weight, Eigen::Vector3d::Zero().eval())),  // 6 dof vector
+                        stack(foot_pose_weight, Eigen::Vector3d::Zero().eval()),  // 6 dof vector
                         !quad_state_->GetFeetContacts()[feet_idx]),
         wbc_robot_model_,
         feet_names[feet_idx],
@@ -304,9 +306,9 @@ void WBCArcOPT::UpdateModel(const ModelInterface& quad_model) {
   uint idx = wbc_model_temp->getFrameId("base_link");
   assert(idx != wbc_model_temp->frames.size());
 
-  wbc_model_temp->inertias[wbc_model_temp->frames[idx].parent].mass() = quad_model.getBaseMass();
-  wbc_model_temp->inertias[wbc_model_temp->frames[idx].parent].lever() = quad_model.getBaseCOM();
-  wbc_model_temp->inertias[wbc_model_temp->frames[idx].parent].inertia() =
+  wbc_model_temp->inertias[wbc_model_temp->frames[idx].parentJoint].mass() = quad_model.getBaseMass();
+  wbc_model_temp->inertias[wbc_model_temp->frames[idx].parentJoint].lever() = quad_model.getBaseCOM();
+  wbc_model_temp->inertias[wbc_model_temp->frames[idx].parentJoint].inertia() =
       pinocchio::Symmetric3(quad_model.getBaseInertia());
 }
 

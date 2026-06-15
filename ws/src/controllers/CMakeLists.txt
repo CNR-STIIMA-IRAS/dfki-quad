@@ -47,27 +47,27 @@ find_package(PkgConfig REQUIRED)
 function(target_ros_dependencies target)
     foreach(dependency IN LISTS ARGN)
         if(dependency STREQUAL "Eigen3")
-            target_link_libraries(${target} PUBLIC Eigen3::Eigen)
+            target_link_libraries(${target} Eigen3::Eigen)
         elseif(dependency STREQUAL "interfaces")
-            target_link_libraries(${target} PUBLIC
+            target_link_libraries(${target}
                     interfaces::interfaces__rosidl_generator_cpp)
         elseif(dependency STREQUAL "rclcpp")
-            target_link_libraries(${target} PUBLIC rclcpp::rclcpp)
+            target_link_libraries(${target} rclcpp::rclcpp)
         elseif(dependency STREQUAL "common")
-            target_link_libraries(${target} PUBLIC common::quad_model_pino)
+            target_link_libraries(${target} common::quad_model_pino)
         elseif(dependency STREQUAL "std_msgs")
-            target_link_libraries(${target} PUBLIC
+            target_link_libraries(${target}
                     std_msgs::std_msgs__rosidl_generator_cpp)
         elseif(dependency STREQUAL "sensor_msgs")
-            target_link_libraries(${target} PUBLIC
+            target_link_libraries(${target}
                     sensor_msgs::sensor_msgs__rosidl_generator_cpp)
         elseif(dependency STREQUAL "geometry_msgs")
-            target_link_libraries(${target} PUBLIC
+            target_link_libraries(${target}
                     geometry_msgs::geometry_msgs__rosidl_generator_cpp)
         elseif(dependency STREQUAL "drake")
-            target_link_libraries(${target} PUBLIC drake::drake)
+            target_link_libraries(${target} drake::drake)
         elseif(dependency STREQUAL "simulator")
-            target_link_libraries(${target} PUBLIC simulator::drake_visualizers)
+            target_link_libraries(${target} simulator::drake_visualizers)
         else()
             message(FATAL_ERROR "Unsupported dependency ${dependency}")
         endif()
