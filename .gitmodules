@@ -1,0 +1,27 @@
+[submodule "ws/deps/libserial"]
+	path = ws/deps/libserial
+	url = https://github.com/crayzeewulf/libserial
+[submodule "ws/deps/proxsuite"]
+	path = ws/deps/proxsuite
+	url = https://github.com/Simple-Robotics/proxsuite
+[submodule "ws/deps/invariant-ekf"]
+	path = ws/deps/invariant-ekf
+	url = https://github.com/CNR-STIIMA-IRAS/invariant-ekf.git
+[submodule "ws/deps/unitree_sdk2"]
+	path = ws/deps/unitree_sdk2
+	url = https://github.com/unitreerobotics/unitree_sdk2
+[submodule "ws/deps/matplotplusplus"]
+	path = ws/deps/matplotplusplus
+	url = https://github.com/alandefreitas/matplotplusplus
+[submodule "ws/deps/fmt"]
+	path = ws/deps/fmt
+	url = https://github.com/fmtlib/fmt
+[submodule "ws/deps/wbc"]
+	path = ws/deps/wbc
+	url = https://github.com/ARC-OPT/wbc
+[submodule "ws/deps/acados"]
+	path = ws/deps/acados
+	url = https://github.com/acados/acados
+[submodule "ws/src/unitree_go"]
+	path = ws/src/unitree_go
+	url = https://github.com/Unitree-Go2-Robot/unitree_go.git

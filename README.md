@@ -58,6 +58,36 @@ lease use merge requests as described [here](CONTRIBUTING.md) to add/adapt funct
 
 ## Installation
 
+### Clone the repository and initialize submodules
+
+The libraries under `ws/deps/` are Git submodules. Some of those libraries also
+contain nested submodules, so clone the repository recursively:
+
+```bash
+git clone --recurse-submodules https://github.com/dfki-ric-underactuated-lab/dfki-quad.git
+cd dfki-quad
+```
+
+If the repository was cloned without `--recurse-submodules`, initialize all
+submodules, including nested ones, with:
+
+```bash
+git submodule sync --recursive
+git submodule update --init --recursive
+```
+
+After switching branches or pulling changes, run the same commands again to
+ensure every submodule is checked out at the commit recorded by the repository.
+You can verify the current state with:
+
+```bash
+git submodule status --recursive
+```
+
+A leading `-` means a submodule is not initialized, while a leading `+` means
+it is checked out at a different commit from the one recorded by the parent
+repository.
+
 **1. Build the docker image:**
 
 * If you want to build the image yourself, use the `build_new_image.sh` script.
@@ -478,5 +508,4 @@ You can then add the following lines to your vscode JSON "workspace" or "user" s
 Make sure the `"python.formatting.blackPath"` points to the correct location for vscode to find your `black` installation.
 
 </details>
-
 
