@@ -88,53 +88,35 @@ A leading `-` means a submodule is not initialized, while a leading `+` means
 it is checked out at a different commit from the one recorded by the parent
 repository.
 
-**1. Build the docker image:**
-
-* If you want to build the image yourself, use the `build_new_image.sh` script.
-
-    ```bash
-    ./build_new_image.sh
-    ```
-
-    > **Note:** If you already started a container before and saved important data to it, make a backup, since this script will delete all previously created containers with the "dfki_quad" label.
-
-**2. Starting and accessing containers**
-
-* You can start a new container by executing the `run_docker.sh` script.
-
-    ```bash
-    ./run_docker.sh
-    ```
-
-* If you need more than one terminal, you can use the `new_docker_shell.sh` script.
-This will launch a new shell for the already running container.
-
-    ```bash
-    ./new_docker_shell.sh
-    ```
-
-* Connected gampads will automatically be accessible from within the container.
-If not, simply rerun the `run_docker.sh` script.
-Currently, most scripts support Logitech F310 type gamepads. For other gamepads (e.g. xbox360) axes mapping might be different.
-
-    > **Note:** If you want to create a new container (e.g. for rebuiling the software stack), you can use the `reset_docker_container.sh` script. This will delete all current containers with the "dfki_quad" label. After that, you can proceed with the `run_docker.sh` script, which will create a new container for you.
-
-**3. Building the software stack**
+**1. Building the software stack**
 
 * Inside the container, build the packages and run a simulation by running the following commands.
 
     > **Note:** The `--symlink-install` option enables you to change *yaml* and *python* files without rebuilding. If you want to use it, you have to use it consistently, as it cannot overwrite compilations without this option. Use `$ rm -r build/ install/ log/` to remove former compilations if you want to compile with this option the first time.
 
-  a) For the ulab quad:
+  a) Build the dependencies:
+
      ```bash
-     colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DROBOT_NAME=ulab
+     colcon build \
+        --symlink-install \
+        --base-paths deps \
+        --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DROBOT_NAME=ulab -DPython3_EXECUTABLE=/usr/bin/python3 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON 
      source install/setup.bash
-     source ~/setup_ulab_workspace.bash
+     ```
+
+  b) For the ulab quad:
+     ```bash
+     colcon build \
+        --symlink-install \
+        --base-paths src \
+        --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DROBOT_NAME=ulab -DPython3_EXECUTABLE=/usr/bin/python3 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DWITH_VICON=OFF -DWITHOUT_DRAKE=OFF
      ```
     b) For the unitree quad:
      ```bash
-     colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DROBOT_NAME=go2
-     source install/setup.bash
+     colcon build \
+        --symlink-install \
+        --base-paths src \
+        --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DROBOT_NAME=go2 -DPython3_EXECUTABLE=/usr/bin/python3 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DWITH_VICON=OFF -DWITHOUT_DRAKE=OFF
      source ~/setup_go2_workspace.bash
      ```
     > **Note:** The unitree software stack requires cyclone dds, which will be setup by the last command. This means that your network interface need to be configured in this script.
@@ -147,20 +129,8 @@ Quadrupedal Walking__ follow the following instruction:
 
 > Note: If you just want to recreate the plots, you can use our [Dataset](https://zenodo.org/records/13767157?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6ImM2YmI4M2E3LTFjYTEtNDQxYS1iYzZmLTNjMzg2ZGFmZmYzYSIsImRhdGEiOnt9LCJyYW5kb20iOiJhNzZmMGE3ZmUzZTYxNGUyODg5YjJkMWI0N2RiMDkyZCJ9.6vIqkFOnB-MqHcPBpA3v8jU4oUmoOM4eOaKRF3BtRhVLIcOoaQ3HVdNrFoN2r6kkmCvU09NPV8mPprelmFgK-A) and jump directly to step (5).
 
-**1. Installation**
-* If not yet done, build the docker image and install the software stack using the _GO2_ quadruped option:
-    ```bash
-    https://github.com/dfki-ric-underactuated-lab/dfki-quad
-    cd dfki-quad
-    ./build_new_image.sh
-    ./run_docker.sh
-    cbg # This is a shorthand to build the software stack using the -DROBOT_NAME=go2 option
-    sr # This is a shorthand to ~/setup_ulab_workspace.bash, which is nececarry since the simulation is used and not a real system
-    ```
-  > **Note**: If you want to run the simulation and the controller on two different machines, like in the paper, the installation has to be done on both.
 
-
-**2. _Simulation Machine:_ Start the simulation**
+**1. _Simulation Machine:_ Start the simulation**
 * On the machine that should run the simulation run the container and start the simulation
     ```bash
     sr # This sources the ros environment for the simulation
