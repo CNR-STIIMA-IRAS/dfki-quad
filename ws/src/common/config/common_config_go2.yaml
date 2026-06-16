@@ -1,6 +1,6 @@
 /**:
   ros__parameters:
-    model_urdf: "src/common/model/urdf/go2/urdf/go2_description.urdf"
+    model_urdf: "package://common/model/urdf/go2/urdf/go2_description.urdf"
     model_feet_link_names: [ "fl_contact_frame", "fr_contact_frame", "bl_contact_frame", "br_contact_frame" ]
     model_base_link_name: "base_link"
     model_joint_names: [ "fl_abad",

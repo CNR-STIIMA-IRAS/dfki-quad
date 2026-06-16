@@ -19,6 +19,7 @@
     <build_type>ament_cmake</build_type>
   </export>
   <depend>interfaces</depend>
+  <depend>ament_index_cpp</depend>
   <depend>pinocchio</depend>
   <depend>rclcpp</depend>
   <depend>rclpy</depend>

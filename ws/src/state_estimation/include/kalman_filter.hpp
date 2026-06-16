@@ -1,12 +1,14 @@
 #pragma once
 
+#define INEKF_USE_MUTEX false
+
 #include <InEKF.h>
+
+#include <memory>
 
 #include <common/model_interface.hpp>
 #include <common/sequence_containers.hpp>
 #include <sensor_msgs/msg/imu.hpp>
-
-#define INEKF_USE_MUTEX false
 
 #define DT_MIN 1e-6
 #define DT_MAX 1
@@ -15,7 +17,7 @@ class KalmanFilter {
  private:
   std::shared_ptr<const ModelInterface> quad_model_;
   inekf::InEKF filter_;
-  inekf::RobotState init_state_;
+  std::unique_ptr<inekf::RobotState> init_state_;
   sensor_msgs::msg::Imu last_imu_msg_;
   bool first_imu_msg_received_;
   Eigen::Vector4d contact_forces_prev_;

@@ -60,6 +60,7 @@ def generate_launch_description():
             name="state_estimation_node",
             parameters=[state_estimation_config_path, common_config_path, {"use_sim_time": use_sim_time}],
             output='screen',
-            arguments=['--ros-args', '--log-level', ["mit_controller_node:=", "debug"]]
+            arguments=['--ros-args', '--log-level', ["mit_controller_node:=", "debug"]], 
+            prefix=['xterm -e gdb -ex run --args'],
         )
     ])

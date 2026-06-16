@@ -1,5 +1,6 @@
 #include "kalman_filter.hpp"
 
+#include <cmath>
 #include <iostream>
 #include <utility>
 
@@ -23,20 +24,24 @@ KalmanFilter::KalmanFilter(const std::shared_ptr<const ModelInterface> &quadMode
   filter_.setNoiseParams(noise_params);
 
   // Set initial state
-  Eigen::Matrix<double, 15, 15> P_init = Eigen::Matrix<double, 15, 15>::Zero();
+  Eigen::MatrixXd P_init = Eigen::MatrixXd::Zero(15, 15);
   P_init.block<3, 3>(0, 0).diagonal().setConstant(pow(params_.prior_base_orientation_std_, 2));
   P_init.block<3, 3>(3, 3).diagonal().setConstant(pow(params_.prior_base_velocity_std_, 2));
   P_init.block<3, 3>(6, 6).diagonal().setConstant(pow(params_.prior_base_position_std_, 2));
   P_init.block<3, 3>(9, 9).diagonal().setConstant(pow(params_.prior_gyroscope_bias_std_, 2));
   P_init.block<3, 3>(12, 12).diagonal().setConstant(pow(params_.prior_accelerometer_bias_std_, 2));
-  init_state_.setRotation(initial_orientation.toRotationMatrix());
-  init_state_.setVelocity(Eigen::Vector3d::Zero());                     // initial velocity assumed to be zero
-  init_state_.setPosition(initial_robot_pose);                          // initial position is at x/y=0, but a
-                                                                        // defined height
-  init_state_.setGyroscopeBias(params_.prior_gyroscope_bias_);          // init gyroscope bias
-  init_state_.setAccelerometerBias(params_.prior_accelerometer_bias_);  // init accelerometer bias
-  init_state_.setP(P_init);
-  filter_.setState(init_state_);
+
+  Eigen::MatrixXd X_init = Eigen::MatrixXd::Identity(5, 5);
+  X_init.block<3, 3>(0, 0) = initial_orientation.normalized().toRotationMatrix();
+  X_init.block<3, 1>(0, 3).setZero();          // initial velocity assumed to be zero
+  X_init.block<3, 1>(0, 4) = initial_robot_pose;
+
+  Eigen::VectorXd theta_init = Eigen::VectorXd::Zero(6);
+  theta_init.head<3>() = params_.prior_gyroscope_bias_;
+  theta_init.tail<3>() = params_.prior_accelerometer_bias_;
+
+  init_state_ = std::make_unique<inekf::RobotState>(X_init, theta_init, P_init);
+  filter_.setState(*init_state_);
 }
 
 void KalmanFilter::Predict(const sensor_msgs::msg::Imu &imu_msg) {
@@ -73,25 +78,21 @@ void KalmanFilter::Update(const SequenceView<bool, ModelInterface::N_LEGS> &foot
                           const SequenceView<const Eigen::Vector3d, ModelInterface::N_LEGS> &foot_positions,
                           bool belly_contact,
                           const SequenceView<const Eigen::Vector3d, ModelInterface::N_LEGS> &belly_contact_point) {
-  static std::vector<std::pair<int, bool>> foot_contacts_pairs(ModelInterface::N_LEGS * 2);
-  static inekf::vectorKinematics measured_kinematics;
-  measured_kinematics.clear();
-  measured_kinematics.reserve(ModelInterface::N_LEGS * 2);
+  std::vector<std::pair<int, bool>> foot_contacts_pairs;
+  inekf::vectorKinematics measured_kinematics;
+  foot_contacts_pairs.reserve(ModelInterface::N_LEGS);
+  measured_kinematics.reserve(ModelInterface::N_LEGS);
 
   for (int i = 0; i < ModelInterface::N_LEGS; i++) {
-    foot_contacts_pairs[i] = {i, foot_contacts[i]};
+    if (!foot_positions[i].allFinite()) {
+      std::cout << "Invalid foot position detected! Skipping kinematics update." << std::endl;
+      return;
+    }
+    foot_contacts_pairs.emplace_back(i, foot_contacts[i]);
     measured_kinematics.push_back(
         inekf::Kinematics(i,
                           Eigen::Affine3d(Eigen::Translation3d(foot_positions[i])).matrix(),
                           Eigen::Matrix<double, 6, 6>::Identity() * pow(foot_step_measurement_std_, 2)));
-  }
-
-  for (int i = 0; i < ModelInterface::N_LEGS; i++) {
-    foot_contacts_pairs[ModelInterface::N_LEGS + i] = {ModelInterface::N_LEGS + i, belly_contact};
-    measured_kinematics.push_back(inekf::Kinematics(
-        ModelInterface::N_LEGS + i,
-        Eigen::Affine3d(Eigen::Translation3d(belly_contact_point[i])).matrix(),
-        Eigen::Matrix<double, 6, 6>::Identity() * pow(params_.belly_contact_point_measurement_std_, 2)));
   }
 
   filter_.setContacts(foot_contacts_pairs);
@@ -107,15 +108,8 @@ void KalmanFilter::Update(const SequenceView<bool, ModelInterface::N_LEGS> &foot
       }
     }
   }
-  if (belly_contact) {
-    for (int i = 0; i < ModelInterface::N_LEGS; i++) {
-      filter_.CorrectContactPosition(
-          ModelInterface::N_LEGS + i,
-          {0.0, 0.0, 0.0},
-          Eigen::Matrix3d::Identity() * params_.foot_on_plane_std_ * params_.foot_on_plane_std_,
-          {0, 0, 1});
-    }
-  }
+  (void)belly_contact;
+  (void)belly_contact_point;
 }
 
 void KalmanFilter::GetState(Eigen::Vector3d &position,
@@ -230,7 +224,7 @@ void KalmanFilter::AdaptCovariances(
 
 void KalmanFilter::Reset() {
   filter_.clear();
-  filter_.setState(init_state_);
+  filter_.setState(*init_state_);
 }
 
 void KalmanFilter::ResetCovariances() {
@@ -238,11 +232,11 @@ void KalmanFilter::ResetCovariances() {
   auto current_state = filter_.getState();
   Eigen::MatrixXd P_new;
   P_new.resize(current_state.dimP(), current_state.dimP());
-  P_new.block<15, 15>(0, 0) = init_state_.getP();
+  P_new.block<15, 15>(0, 0) = init_state_->getP();
   P_new.block(14, 14, current_state.dimP() - 15, current_state.dimP() - 15)
       .diagonal()
       .fill(pow(params_.foot_step_measurement_std_, 2));
-  current_state.setTheta(init_state_.getTheta());
+  current_state.setTheta(init_state_->getTheta());
 }
 
 Eigen::Vector3d KalmanFilter::GetAccelerationBias() const { return filter_.getState().getAccelerometerBias(); }

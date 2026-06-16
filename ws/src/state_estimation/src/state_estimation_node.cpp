@@ -12,9 +12,12 @@ StateEstimationNode::StateEstimationNode()
       vicon_pos_filter_(VICON_FILTER_WINDOW),
       vicon_orient_filter_(VICON_FILTER_WINDOW),
       first_orientation_from_raw_imu_set_(false),
+      joint_filter_initialized_(false),
+      imu_filter_initialized_(false),
       kalman_filter_(nullptr) {
   // init first angular velocity
   last_joint_velocity_.fill(0.0);
+  ground_contact_force_.fill(0.0);
   this->declare_parameter("kalman_update_rate", rclcpp::ParameterType::PARAMETER_DOUBLE);
   this->declare_parameter("state_publish_rate", rclcpp::ParameterType::PARAMETER_DOUBLE);
   this->declare_parameter("state_lf_publish_rate", rclcpp::ParameterType::PARAMETER_DOUBLE);
@@ -87,7 +90,7 @@ StateEstimationNode::StateEstimationNode()
   this->declare_parameter("contact_detection.leg_swing_time", rclcpp::ParameterType::PARAMETER_DOUBLE);
   assert(this->get_parameter("contact_detection.force_threshold").as_double_array().size() == ModelInterface::N_LEGS);
 
-  contact_detection_ = new ContactDetection(
+  contact_detection_ = std::make_unique<ContactDetection>(
       quad_model_,
       to_array<ModelInterface::N_LEGS>(this->get_parameter("contact_detection.force_threshold").as_double_array()),
       this->get_parameter("contact_detection.energy_obs_kd").as_double(),
@@ -197,15 +200,21 @@ void StateEstimationNode::JointStatesCallback(const interfaces::msg::JointState 
         QuadState::TimePoint::duration(joint_msg.header.stamp.nanosec)
         + std::chrono::duration_cast<QuadState::TimePoint::duration>(std::chrono::seconds(joint_msg.header.stamp.sec)));
     quad_state_msg_.joint_state.velocity = joint_vel_filter_.update(joint_msg.velocity);
-    auto acc =
-        (joint_vel_filter_.get() - last_joint_velocity_)
-        / std::chrono::duration_cast<std::chrono::duration<double>>(current_joint_time - last_joint_time_).count();
+    const auto joint_dt =
+        std::chrono::duration_cast<std::chrono::duration<double>>(current_joint_time - last_joint_time_).count();
+    std::array<double, ModelInterface::NUM_JOINTS> acc{};
+    if (joint_filter_initialized_ && joint_dt > 0.0) {
+      acc = (joint_vel_filter_.get() - last_joint_velocity_) / joint_dt;
+    }
     quad_state_msg_.joint_state.acceleration = joint_acc_filter_.update(acc);
-    contact_detection_->Update(
-        quad_state_msg_.joint_state,
-        std::chrono::duration_cast<std::chrono::duration<double>>(current_joint_time - last_joint_time_).count());
+    const bool kalman_was_initialized = kalman_filter_ != nullptr;
+    const auto contact_detection_dt = (joint_filter_initialized_ && joint_dt > 0.0) ? joint_dt : 0.0;
+    if (kalman_was_initialized) {
+      contact_detection_->Update(quad_state_msg_.joint_state, contact_detection_dt);
+    }
     last_joint_time_ = current_joint_time;
     last_joint_velocity_ = joint_vel_filter_.get();
+    joint_filter_initialized_ = true;
     quad_state_msg_.joint_state.effort = joint_tau_filter_.update(joint_msg.effort);
     std::array<Eigen::Ref<Eigen::Vector3d>, ModelInterface::N_LEGS> contact_forces_map = {
         Eigen::Map<Eigen::Vector3d>(&quad_state_msg_.ground_contact_force[0 * ModelInterface::N_JOINTS_PER_LEG]),
@@ -213,7 +222,12 @@ void StateEstimationNode::JointStatesCallback(const interfaces::msg::JointState 
         Eigen::Map<Eigen::Vector3d>(&quad_state_msg_.ground_contact_force[2 * ModelInterface::N_JOINTS_PER_LEG]),
         Eigen::Map<Eigen::Vector3d>(&quad_state_msg_.ground_contact_force[3 * ModelInterface::N_JOINTS_PER_LEG])};
     static std::array<double, ModelInterface::N_LEGS> unused;
-    if (contact_state_subscription_ != nullptr) {
+    if (!kalman_was_initialized) {
+      quad_state_msg_.foot_contact.fill(true);
+      for (auto& force : contact_forces_map) {
+        force.setZero();
+      }
+    } else if (contact_state_subscription_ != nullptr) {
       contact_detection_->GetContacts(contact_forces_map, unused);
     } else {
       contact_detection_->GetContacts(quad_state_msg_.foot_contact, contact_forces_map, unused);
@@ -305,10 +319,11 @@ void StateEstimationNode::JointStatesCallback(const interfaces::msg::JointState 
                                   joint_states,
                                   init_orient,
                                   init_pose(2));
-      kalman_filter_ = new KalmanFilter(quad_model_,
-                                        (Eigen::Translation3d(init_pose) * quad_model_->GetBodyToIMU()).translation(),
-                                        init_orient,
-                                        kalman_params_);
+      kalman_filter_ =
+          std::make_unique<KalmanFilter>(quad_model_,
+                                         (Eigen::Translation3d(init_pose) * quad_model_->GetBodyToIMU()).translation(),
+                                         init_orient,
+                                         kalman_params_);
       RCLCPP_INFO(this->get_logger(),
                   "Kalman filter initialized at: [x %f, y %f,z %f] with [w %f, x %f, y %f, z %f]",
                   init_pose.x(),
@@ -379,9 +394,12 @@ void StateEstimationNode::ImuCallback(const sensor_msgs::msg::Imu &imu_msg) {
     auto filtered_linear_acc = linear_acc_filter_.update({imu_msg.linear_acceleration.x - acceleration_bias.x(),
                                                           imu_msg.linear_acceleration.y - acceleration_bias.y(),
                                                           imu_msg.linear_acceleration.z - acceleration_bias.z()});
-    auto ang_acc =
-        (filtered_ang_vel - last_angular_velocity_)
-        / std::chrono::duration_cast<std::chrono::duration<double>>(current_imu_time - last_imu_time_).count();
+    const auto imu_dt =
+        std::chrono::duration_cast<std::chrono::duration<double>>(current_imu_time - last_imu_time_).count();
+    Eigen::Vector3d ang_acc = Eigen::Vector3d::Zero();
+    if (imu_filter_initialized_ && imu_dt > 0.0) {
+      ang_acc = (filtered_ang_vel - last_angular_velocity_) / imu_dt;
+    }
 
     if (kalman_params_.imu_measures_g_ == true) {
       Eigen::Vector3d linear_acc = orientation * filtered_linear_acc;
@@ -398,6 +416,7 @@ void StateEstimationNode::ImuCallback(const sensor_msgs::msg::Imu &imu_msg) {
     eigenToRosMsg(orientation * filtered_ang_vel, quad_state_msg_.twist.twist.angular);
     last_angular_velocity_ = filtered_ang_vel;
     last_imu_time_ = current_imu_time;
+    imu_filter_initialized_ = true;
   }
 }
 
@@ -475,6 +494,11 @@ void StateEstimationNode::ResetStateEstimationCallback(const std_srvs::srv::Trig
                                                        std_srvs::srv::Trigger::Response::SharedPtr response) {
   (void)request;  // unused since it is empty
 
+  if (kalman_filter_ == nullptr) {
+    response->success = false;
+    response->message = "Kalman filter is not initialized yet";
+    return;
+  }
   kalman_filter_->Reset();
   response->success = true;
   RCLCPP_INFO(this->get_logger(), "Reset of state estimation performed");
@@ -484,6 +508,11 @@ void StateEstimationNode::ResetStateEstimationCovariancesCallback(
     const std_srvs::srv::Trigger::Request::SharedPtr request, std_srvs::srv::Trigger::Response::SharedPtr response) {
   (void)request;  // unused sicne it is empty
 
+  if (kalman_filter_ == nullptr) {
+    response->success = false;
+    response->message = "Kalman filter is not initialized yet";
+    return;
+  }
   kalman_filter_->ResetCovariances();
   response->success = true;
   RCLCPP_INFO(this->get_logger(), "Reset of state estimation covariances performed");
@@ -509,3 +538,4 @@ int main(int argc, char *argv[]) {
   rclcpp::shutdown();
   return 0;
 }
+

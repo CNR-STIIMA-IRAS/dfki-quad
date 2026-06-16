@@ -1,5 +1,44 @@
 #include "quad_model_pino.hpp"
 
+#include <filesystem>
+
+#include "ament_index_cpp/get_package_share_path.hpp"
+
+namespace {
+std::string ResolveModelPath(const std::string& model_path) {
+  namespace fs = std::filesystem;
+
+  const fs::path path(model_path);
+  if (path.is_absolute() || fs::exists(path)) {
+    return path.string();
+  }
+
+  const std::string package_uri_prefix = "package://";
+  if (model_path.rfind(package_uri_prefix, 0) == 0) {
+    const auto package_path = model_path.substr(package_uri_prefix.size());
+    const auto separator = package_path.find('/');
+    if (separator != std::string::npos) {
+      const auto package_name = package_path.substr(0, separator);
+      const auto package_relative_path = package_path.substr(separator + 1);
+      return (ament_index_cpp::get_package_share_path(package_name) / package_relative_path).string();
+    }
+  }
+
+  const std::string workspace_source_prefix = "src/";
+  if (model_path.rfind(workspace_source_prefix, 0) == 0) {
+    const auto package_start = workspace_source_prefix.size();
+    const auto separator = model_path.find('/', package_start);
+    if (separator != std::string::npos) {
+      const auto package_name = model_path.substr(package_start, separator - package_start);
+      const auto package_relative_path = model_path.substr(separator + 1);
+      return (ament_index_cpp::get_package_share_path(package_name) / package_relative_path).string();
+    }
+  }
+
+  return model_path;
+}
+}  // namespace
+
 QuadModelPino::QuadModelPino(rclcpp::Node& owning_node) {
   owning_node.declare_parameter("model_urdf", rclcpp::ParameterType::PARAMETER_STRING);
   owning_node.declare_parameter("model_feet_link_names", rclcpp::ParameterType::PARAMETER_STRING_ARRAY);
@@ -30,7 +69,8 @@ void QuadModelPino::Initialize(const std::string& urdf_path,
                                const std::string& base_link_name,
                                const std::array<std::string, NUM_JOINTS>& joint_names,
                                const std::array<double, NUM_JOINTS>& joint_default_positions) {
-  pinocchio::urdf::buildModel(urdf_path, pinocchio::JointModelFreeFlyer(), model_);
+  const auto resolved_urdf_path = ResolveModelPath(urdf_path);
+  pinocchio::urdf::buildModel(resolved_urdf_path, pinocchio::JointModelFreeFlyer(), model_);
   std::cout << "Loaded URDF model_ with " << model_.nq << " joints and " << model_.nv << " degrees of freedom."
             << std::endl;
   // Prepare data
@@ -107,12 +147,13 @@ void QuadModelPino::CalcFootForceVelocityInBodyFrame(
     const Eigen::Ref<const Eigen::Matrix<double, N_JOINTS_PER_LEG, 1>>& joint_torques,
     Eigen::Ref<Eigen::Vector3d> f_ee,
     Eigen::Ref<Eigen::Vector3d> v_ee) const {
-  pinocchio::Data data = data_;
+  pinocchio::Data data(model_);
   QVec q;
   VVec v;
   VVec a;
   VVec torque_measured;
   q.setZero();
+  q.segment<4>(3) = Eigen::Quaterniond::Identity().coeffs();
   v.setZero();
   a.setZero();
   torque_measured.setZero();
@@ -162,11 +203,12 @@ void QuadModelPino::CalcLegInverseKinematicsInBody(int leg_index,
   // initializations
   FRAMEJac Jac;
   Eigen::Vector3d joint_state_prior_est, foot_pos_current;
-  pinocchio::Data data = data_;
+  pinocchio::Data data(model_);
   joint_state_prior_est = joint_state_init_guess;
   theta.setZero();
   QVec q;
   q.setZero();
+  q.segment<4>(3) = Eigen::Quaterniond::Identity().coeffs();
   Jac.setZero();
   SetJointConfigSpace(leg_index, joint_state_init_guess, q);
   pinocchio::forwardKinematics(model_, data, q);
@@ -237,11 +279,12 @@ void QuadModelPino::CalcLegDiffKinematicsBodyFrame(int leg_index,
 void QuadModelPino::CalcJacobianLegBase(int leg_index,
                                         Eigen::Vector3d joint_pos,
                                         Eigen::Matrix3d& Jac_legBaseToFoot) const {
-  pinocchio::Data data = data_;
+  pinocchio::Data data(model_);
   FRAMEJac jac;
   jac.setZero();
   QVec q;
   q.setZero();
+  q.segment<4>(3) = Eigen::Quaterniond::Identity().coeffs();
   SetJointConfigSpace(leg_index, joint_pos, q);
   pinocchio::computeJointJacobians(model_, data, q);
   pinocchio::updateFramePlacements(model_, data);
@@ -254,7 +297,7 @@ void QuadModelPino::CalcJacobianLegBase(int leg_index,
     const Eigen::Vector3d& joint_pos,
     Eigen::Matrix4d& T_BodyToFoot,
     Eigen::Vector3d& foot_pos_body) const {
-  pinocchio::Data data = data_;
+  pinocchio::Data data(model_);
   QVec q;
   q.setZero();
   q.segment<4>(3) = Eigen::Quaterniond::Identity().coeffs();
@@ -275,7 +318,7 @@ Eigen::Vector3d QuadModelPino::CalcFootPositionInWorld(unsigned int foot_idx,
                                                        const Eigen::Vector3d& body_pos,
                                                        const Eigen::Quaterniond& body_orientation,
                                                        const Eigen::Vector3d& joint_positions) const {
-  pinocchio::Data data = data_;
+  pinocchio::Data data(model_);
   QVec q;
   q.setZero();
   q.segment<3>(0) = body_pos;
@@ -294,7 +337,7 @@ Eigen::Matrix3d QuadModelPino::getBaseInertia() const { return model_.inertias[1
 void QuadModelPino::getLegInertia(
     const std::array<Eigen::Vector<double, ModelInterface::N_JOINTS_PER_LEG>, ModelInterface::N_LEGS>& joint_pos,
     Eigen::Ref<Eigen::Matrix3d> leg_inertia) const {
-  pinocchio::Data data = data_;
+  pinocchio::Data data(model_);
   // set configuration
   QVec q;
   q.setZero();
@@ -343,7 +386,7 @@ void QuadModelPino::CalcBaseHeight(const std::array<bool, ModelInterface::N_LEGS
                                    const std::array<const Eigen::Vector3d, ModelInterface::N_LEGS>& joint_states,
                                    const Eigen::Quaterniond& body_orientation,
                                    double& base_height) const {
-  pinocchio::Data data = data_;
+  pinocchio::Data data(model_);
   double sum_z = 0;
   int num_contact_feet = 0;
   Eigen::Vector3d foot_pos_body;
@@ -382,7 +425,7 @@ double QuadModelPino::ComputeEnergyDerivative(int leg_index,
 
 void QuadModelPino::ComputeMomentumSignal(
     const StateInterface& state, Eigen::Vector<double, ModelInterface::NUM_JOINTS + 6>& momentum_signal) const {
-  pinocchio::Data data = data_;
+  pinocchio::Data data(model_);
   QVec q;
   VVec v;
   VVec a;
@@ -426,7 +469,7 @@ void QuadModelPino::ComputeGeneralizedMomentum(
     const Eigen::Vector<double, ModelInterface::NUM_JOINTS + 6>& joint_vel,
     Eigen::Vector<double, ModelInterface::NUM_JOINTS + 6>& generalized_momentum) const {
   // TODO: Change to joint pos, vel and acc in the arguments
-  pinocchio::Data data = data_;
+  pinocchio::Data data(model_);
   QVec q;
   VVec v;
   q.setZero();
@@ -452,7 +495,7 @@ void QuadModelPino::ComputeEstimatedForces(int leg_index,
 void QuadModelPino::ComputeRegressorMatrix(
     const StateInterface& state,
     Eigen::Matrix<double, ModelInterface::NUM_JOINTS + 6, (ModelInterface::NUM_JOINTS + 1) * 10>& regressor) const {
-  pinocchio::Data data = data_;
+  pinocchio::Data data(model_);
   QVec q;
   VVec v;
   VVec a;

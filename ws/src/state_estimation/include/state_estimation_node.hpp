@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/wait_for_message.hpp>
 #include <std_srvs/srv/trigger.hpp>
@@ -66,6 +68,8 @@ class StateEstimationNode : public rclcpp::Node {
 
   // Parameters
   bool first_orientation_from_raw_imu_set_;
+  bool joint_filter_initialized_;
+  bool imu_filter_initialized_;
   std::array<double, ModelInterface::N_LEGS> contact_detection_force_threshold_;
   std::array<double, ModelInterface::N_LEGS> laying_on_ground_detection_offset_;
 
@@ -80,8 +84,8 @@ class StateEstimationNode : public rclcpp::Node {
 
   // Sub parts
   KalmanFilter::Params kalman_params_;
-  KalmanFilter *kalman_filter_;  // is a pointer in order to exchange and lazy initialise it
-  ContactDetection *contact_detection_;
+  std::unique_ptr<KalmanFilter> kalman_filter_;  // Lazy initialized once IMU and joint state are available.
+  std::unique_ptr<ContactDetection> contact_detection_;
 
   // Output Msg
   interfaces::msg::QuadState quad_state_msg_;

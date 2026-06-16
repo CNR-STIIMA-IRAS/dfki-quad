@@ -18,6 +18,7 @@ find_package(interfaces REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(pinocchio REQUIRED)
 
 if (ON_PI)
@@ -66,6 +67,7 @@ target_link_libraries(quad_model_symbolic PUBLIC
         rclcpp::rclcpp)
 target_link_libraries(quad_model_pino PUBLIC
         Eigen3::Eigen
+        ament_index_cpp::ament_index_cpp
         interfaces::interfaces__rosidl_generator_cpp
         pinocchio::pinocchio
         rclcpp::rclcpp)
@@ -95,7 +97,7 @@ if (NOT WITHOUT_DRAKE)
 endif ()
 ament_export_targets(quad_model_symbolic HAS_LIBRARY_TARGET)
 ament_export_targets(quad_model_pino HAS_LIBRARY_TARGET)
-ament_export_dependencies(Eigen3 interfaces pinocchio rclcpp)
+ament_export_dependencies(Eigen3 ament_index_cpp interfaces pinocchio rclcpp)
 
 install(DIRECTORY include/common DESTINATION include)
 
