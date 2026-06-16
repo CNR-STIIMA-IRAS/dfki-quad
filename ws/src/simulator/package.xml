@@ -14,6 +14,7 @@
 
   <depend>interfaces</depend>
   <depend>rclcpp</depend>
+  <depend>ament_index_cpp</depend>
   <depend>common</depend>
   <depend>sensor_msgs</depend>
 

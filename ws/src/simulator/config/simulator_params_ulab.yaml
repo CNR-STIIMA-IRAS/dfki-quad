@@ -1,7 +1,7 @@
 drake_simulator:
   ros__parameters:
-    robot_urdf: "src/common/model/urdf/quad.urdf"   # The URDF of the quadruped
-    world_urdf: "src/common/model/urdf/plane.urdf"  # The URDF of the world environment
+    robot_urdf: "package://common/model/urdf/quad.urdf"   # The URDF of the quadruped
+    world_urdf: "package://common/model/urdf/plane.urdf"  # The URDF of the world environment
     world_fix_link: "plane_base_link"               # The base_link name of the world environment
     simulator_discretization_frequency: 1000.       # Discretization frequency of the simulator
     imu_publish_frequency: 100.                     # Publish frequency of the IMU readings (has to be less or equal to simulator_discretization_frequency)
@@ -25,4 +25,3 @@ drake_simulator:
     initial_robot_height: 0.3                      # Spawn height of the robot
     imu_noise: [0.0, 0.0]                       #stddev of noise added to simulated imu data [angular velocity, linear acceleration] ATTENTION: THIS DOES NOT APPEAR IN QUADSTATE MESSAGE
     joint_noise: [0.0, 0.0, 0.0, 0.0]             #stddev of noise added to simulated joint data [position, velocity, effort, acceleration] ATTENTION: THIS DOES NOT APPEAR IN QUADSTATE MESSAGE
-

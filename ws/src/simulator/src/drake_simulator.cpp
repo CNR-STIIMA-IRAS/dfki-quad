@@ -4,7 +4,45 @@
 
 #include <cmath>
 #include <common/sequence_containers.hpp>
+#include <filesystem>
 #include <iostream>
+
+#include "ament_index_cpp/get_package_share_path.hpp"
+
+namespace {
+std::string ResolveModelPath(const std::string& model_path) {
+  namespace fs = std::filesystem;
+
+  const fs::path path(model_path);
+  if (path.is_absolute() || fs::exists(path)) {
+    return path.string();
+  }
+
+  const std::string package_uri_prefix = "package://";
+  if (model_path.rfind(package_uri_prefix, 0) == 0) {
+    const auto package_path = model_path.substr(package_uri_prefix.size());
+    const auto separator = package_path.find('/');
+    if (separator != std::string::npos) {
+      const auto package_name = package_path.substr(0, separator);
+      const auto package_relative_path = package_path.substr(separator + 1);
+      return (ament_index_cpp::get_package_share_path(package_name) / package_relative_path).string();
+    }
+  }
+
+  const std::string workspace_source_prefix = "src/";
+  if (model_path.rfind(workspace_source_prefix, 0) == 0) {
+    const auto package_start = workspace_source_prefix.size();
+    const auto separator = model_path.find('/', package_start);
+    if (separator != std::string::npos) {
+      const auto package_name = model_path.substr(package_start, separator - package_start);
+      const auto package_relative_path = model_path.substr(separator + 1);
+      return (ament_index_cpp::get_package_share_path(package_name) / package_relative_path).string();
+    }
+  }
+
+  return model_path;
+}
+}  // namespace
 
 DrakeSimulator::DrakeSimulator() : restart_sim_(true) {
   // Creates the ROS node
@@ -54,8 +92,13 @@ DrakeSimulator::DrakeSimulator() : restart_sim_(true) {
   // creating the drake plant and adding the quadroped as well as the world
   std::tie(plant_, scene_graph_) = drake::multibody::AddMultibodyPlantSceneGraph(builder_, sim_rate);
   auto parser = drake::multibody::Parser(plant_, scene_graph_);
-  auto robot_model_idx = parser.AddModels(node_->get_parameter("robot_urdf").as_string())[0];
-  parser.AddModels(node_->get_parameter("world_urdf").as_string());
+  parser.package_map().PopulateFromRosPackagePath();
+  const auto robot_urdf = ResolveModelPath(node_->get_parameter("robot_urdf").as_string());
+  const auto world_urdf = ResolveModelPath(node_->get_parameter("world_urdf").as_string());
+  RCLCPP_INFO(node_->get_logger(), "Loading robot model from: %s", robot_urdf.c_str());
+  RCLCPP_INFO(node_->get_logger(), "Loading world model from: %s", world_urdf.c_str());
+  auto robot_model_idx = parser.AddModels(robot_urdf)[0];
+  parser.AddModels(world_urdf);
   // fixing the worldbody to the actual drake world
   plant_->WeldFrames(plant_->world_frame(),
                      plant_->GetBodyByName(node_->get_parameter("world_fix_link").as_string()).body_frame());

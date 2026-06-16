@@ -26,6 +26,7 @@ find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in further dependencies
 # manually. find_package(<dependency> REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(interfaces REQUIRED)
 find_package(common REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -48,7 +49,9 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 include_directories(${EIGEN_INCLUDE_DIR})
 
 add_executable(visualizer src/drake_visualizer.cpp)
+target_compile_features(visualizer PUBLIC cxx_std_17)
 add_executable(simulator src/drake_simulator.cpp src/pd_changeable_controller.cpp)
+target_compile_features(simulator PUBLIC cxx_std_17)
 add_executable(sim_disturber src/disturbance_node.cpp)
 add_library(drake_visualizers STATIC src/drake_vizualisers/positions_vizualiser.cpp
         src/drake_vizualisers/forces_vizualiser.cpp
@@ -63,6 +66,7 @@ include_directories(include)
 target_link_libraries(
         visualizer
         rclcpp::rclcpp
+        ament_index_cpp::ament_index_cpp
         interfaces::interfaces__rosidl_typesupport_cpp
         sensor_msgs::sensor_msgs__rosidl_typesupport_cpp
         common::quad_model_pino
@@ -78,6 +82,7 @@ target_link_libraries(
         simulator
         drake::drake
         rclcpp::rclcpp
+        ament_index_cpp::ament_index_cpp
         interfaces::interfaces__rosidl_typesupport_cpp
         sensor_msgs::sensor_msgs__rosidl_typesupport_cpp
         rosgraph_msgs::rosgraph_msgs__rosidl_typesupport_cpp

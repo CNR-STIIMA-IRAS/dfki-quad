@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include "common/filters.hpp"
 #include "common/model_interface.hpp"
 #include "common/sequence_containers.hpp"

@@ -1,7 +1,9 @@
 #include <Eigen/Dense>
+#include <filesystem>
 #include <iostream>
 #include <vector>
 
+#include "ament_index_cpp/get_package_share_path.hpp"
 #include "common/custom_qos.hpp"
 #include "common/eigen_msg_conversions.hpp"
 #include "common/sequence_containers.hpp"
@@ -34,6 +36,41 @@ using namespace std::chrono_literals;
 using namespace drake;
 using std::placeholders::_1;
 
+namespace {
+std::string ResolveModelPath(const std::string& model_path) {
+  namespace fs = std::filesystem;
+
+  const fs::path path(model_path);
+  if (path.is_absolute() || fs::exists(path)) {
+    return path.string();
+  }
+
+  const std::string package_uri_prefix = "package://";
+  if (model_path.rfind(package_uri_prefix, 0) == 0) {
+    const auto package_path = model_path.substr(package_uri_prefix.size());
+    const auto separator = package_path.find('/');
+    if (separator != std::string::npos) {
+      const auto package_name = package_path.substr(0, separator);
+      const auto package_relative_path = package_path.substr(separator + 1);
+      return (ament_index_cpp::get_package_share_path(package_name) / package_relative_path).string();
+    }
+  }
+
+  const std::string workspace_source_prefix = "src/";
+  if (model_path.rfind(workspace_source_prefix, 0) == 0) {
+    const auto package_start = workspace_source_prefix.size();
+    const auto separator = model_path.find('/', package_start);
+    if (separator != std::string::npos) {
+      const auto package_name = model_path.substr(package_start, separator - package_start);
+      const auto package_relative_path = model_path.substr(separator + 1);
+      return (ament_index_cpp::get_package_share_path(package_name) / package_relative_path).string();
+    }
+  }
+
+  return model_path;
+}
+}  // namespace
+
 class DrakeVisualizer : public rclcpp::Node {
  public:
   DrakeVisualizer() : Node("drake_visualizer"), leg_cmd_recv_(false) {
@@ -47,7 +84,11 @@ class DrakeVisualizer : public rclcpp::Node {
 
     // Set up Drake Stuff
     std::tie(plant, scene_graph) = multibody::AddMultibodyPlantSceneGraph(&builder, 0.001);
-    multibody::Parser(plant).AddModels(this->get_parameter("model_urdf").as_string());
+    auto parser = multibody::Parser(plant);
+    parser.package_map().PopulateFromRosPackagePath();
+    const auto model_urdf = ResolveModelPath(this->get_parameter("model_urdf").as_string());
+    RCLCPP_INFO(this->get_logger(), "Loading visualizer model from: %s", model_urdf.c_str());
+    parser.AddModels(model_urdf);
     plant->Finalize();
     meshcat_ = std::make_shared<geometry::Meshcat>();
     visualization.publish_contacts = true;     // false for the "shadow" model rendering
