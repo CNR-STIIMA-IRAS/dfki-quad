@@ -114,7 +114,6 @@ pkg_search_module(wbc-solvers-qpswift QUIET IMPORTED_TARGET wbc-solvers-qpswift)
 pkg_search_module(wbc-solvers-proxqp QUIET IMPORTED_TARGET wbc-solvers-proxqp)
 pkg_search_module(wbc-solvers-osqp QUIET IMPORTED_TARGET wbc-solvers-osqp)
 pkg_search_module(wbc-solvers-hpipm QUIET IMPORTED_TARGET wbc-solvers-hpipm)
-# pkg_search_module(base-types REQUIRED IMPORTED_TARGET base-types)
 
 
 include_directories(include include/mit_controller src)

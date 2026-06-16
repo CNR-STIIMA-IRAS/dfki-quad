@@ -25,7 +25,7 @@ There are multiple other libraries for Whole-Body Control, e.g., [TSID](https://
 
 Currently supported OS: Ubuntu20.04, Ubuntu22.04, Ubuntu24.04
 
-See the [manifest.xml](https://github.com/ARC-OPT/wbc/blob/master/manifest.xml) for required and optional dependencies. 
+See the [package.xml](package.xml) and installation scripts for required and optional dependencies.
 
 ## ROS 2 Interface
 
@@ -95,4 +95,3 @@ WBC has been developed in the research projects [TransFit](https://robotik.dfki-
 Dennis Mronga, dennis.mronga@dfki.de
 
 Copyright 2017, DFKI GmbH / Robotics Innovation Center
-
