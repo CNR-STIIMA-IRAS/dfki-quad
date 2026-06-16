@@ -12,6 +12,13 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
+def log_warning(logger, message, **kwargs):
+    warning = getattr(logger, "warning", None)
+    if warning is None:
+        warning = logger.warn
+    warning(message, **kwargs)
+
+
 def safe_start():
     rclpy.init()
     node = rclpy.create_node("safe_start_launcher")
@@ -42,7 +49,7 @@ def safe_start():
     while ((end_time - start_time).nanoseconds <= rclpy.time.Time(seconds=3).nanoseconds):
         rclpy.spin_once(node, timeout_sec=1)
         if (len(poses) == 0):
-            node.get_logger().warn("No quad state has been received yet", throttle_duration_sec=1)
+            log_warning(node.get_logger(), "No quad state has been received yet", throttle_duration_sec=1)
             start_time = node.get_clock().now()
         end_time = node.get_clock().now()
 
