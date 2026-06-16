@@ -15,13 +15,55 @@ find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(interfaces REQUIRED)
 find_package(common REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBSERIAL REQUIRED libserial)
+pkg_check_modules(LIBSERIAL REQUIRED IMPORTED_TARGET libserial)
 
 include_directories(include/drivers)
+
+function(target_ros_dependencies target)
+    foreach(dependency IN LISTS ARGN)
+        if(dependency STREQUAL "Eigen3")
+            target_link_libraries(${target} Eigen3::Eigen)
+        elseif(dependency STREQUAL "ament_index_cpp")
+            target_link_libraries(${target} ament_index_cpp::ament_index_cpp)
+        elseif(dependency STREQUAL "common")
+            target_link_libraries(${target} common::quad_model_pino)
+        elseif(dependency STREQUAL "geometry_msgs")
+            target_link_libraries(${target}
+                    geometry_msgs::geometry_msgs__rosidl_typesupport_cpp)
+        elseif(dependency STREQUAL "interfaces")
+            target_link_libraries(${target}
+                    interfaces::interfaces__rosidl_typesupport_cpp)
+        elseif(dependency STREQUAL "rclcpp")
+            target_link_libraries(${target} rclcpp::rclcpp)
+        elseif(dependency STREQUAL "sensor_msgs")
+            target_link_libraries(${target}
+                    sensor_msgs::sensor_msgs__rosidl_typesupport_cpp)
+        elseif(dependency STREQUAL "std_msgs")
+            target_link_libraries(${target}
+                    std_msgs::std_msgs__rosidl_typesupport_cpp)
+        elseif(dependency STREQUAL "std_srvs")
+            target_link_libraries(${target}
+                    std_srvs::std_srvs__rosidl_typesupport_cpp)
+        elseif(dependency STREQUAL "unitree_api")
+            target_link_libraries(${target}
+                    unitree_api::unitree_api__rosidl_typesupport_cpp)
+        elseif(dependency STREQUAL "unitree_go")
+            target_link_libraries(${target}
+                    unitree_go::unitree_go__rosidl_typesupport_cpp)
+        elseif(TARGET ${dependency}::${dependency})
+            target_link_libraries(${target} ${dependency}::${dependency})
+        elseif(TARGET ${dependency})
+            target_link_libraries(${target} ${dependency})
+        else()
+            message(FATAL_ERROR "Unsupported dependency ${dependency}")
+        endif()
+    endforeach()
+endfunction()
 
 if (ROBOT_NAME STREQUAL "ulab")
     message(STATUS "Selected robot: ${ROBOT_NAME}")
@@ -54,7 +96,7 @@ if (ROBOT_NAME STREQUAL "ulab")
 
         add_executable(mjbots_ros2_motor_driver src/mjbots_ros2_motor_driver.cpp
                 src/abstract_motor_driver.cpp)
-        ament_target_dependencies(mjbots_ros2_motor_driver rclcpp geometry_msgs
+        target_ros_dependencies(mjbots_ros2_motor_driver rclcpp geometry_msgs
                 sensor_msgs std_msgs interfaces common)
         target_link_libraries(mjbots_ros2_motor_driver ${MJBOTS_API})
 
@@ -91,7 +133,7 @@ elseif (ROBOT_NAME STREQUAL "go2")
     add_executable(unitree_ros2_motor_driver src/unitree_ros2_motor_driver.cpp
             src/abstract_motor_driver.cpp
     )
-    ament_target_dependencies(unitree_ros2_motor_driver rclcpp geometry_msgs
+    target_ros_dependencies(unitree_ros2_motor_driver rclcpp geometry_msgs
             sensor_msgs std_msgs interfaces unitree_ros2_example unitree_sdk2 unitree_go unitree_api iceoryx_binding_c)
     target_link_libraries(unitree_ros2_motor_driver common::quad_model_pino CycloneDDS-CXX::ddscxx CycloneDDS::ddsc rt pthread)
 
@@ -114,13 +156,13 @@ else ()
 endif ()
 
 add_executable(leg_driver src/leg_driver.cpp)
-ament_target_dependencies(leg_driver rclcpp interfaces Eigen3 std_srvs)
+target_ros_dependencies(leg_driver rclcpp interfaces Eigen3 std_srvs ament_index_cpp)
 target_link_libraries(leg_driver common::quad_model_pino)
 install(TARGETS leg_driver DESTINATION lib/${PROJECT_NAME})
 
 add_executable(contact_sensor_driver src/contact_sensor_driver.cpp)
-ament_target_dependencies(contact_sensor_driver rclcpp interfaces)
-target_link_libraries(contact_sensor_driver ${LIBSERIAL_LIBRARIES} common::quad_model_pino)
+target_ros_dependencies(contact_sensor_driver rclcpp interfaces)
+target_link_libraries(contact_sensor_driver PkgConfig::LIBSERIAL common::quad_model_pino)
 install(TARGETS contact_sensor_driver DESTINATION lib/${PROJECT_NAME})
 
 # Install executables
