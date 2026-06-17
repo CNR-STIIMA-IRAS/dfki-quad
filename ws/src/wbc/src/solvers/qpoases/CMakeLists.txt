@@ -1,6 +1,6 @@
 SET(TARGET_NAME wbc-solvers-qpoases)
 
-pkg_search_module(qpOASES REQUIRED IMPORTED_TARGET qpOASES)
+#pkg_search_module(qpOASES REQUIRED IMPORTED_TARGET qpOASES)
 
 set(SOURCES QPOasesSolver.cpp)
 set(HEADERS QPOasesSolver.hpp)
@@ -10,9 +10,10 @@ list(APPEND PKGCONFIG_REQUIRES wbc-core)
 string (REPLACE ";" " " PKGCONFIG_REQUIRES "${PKGCONFIG_REQUIRES}")
 
 add_library(${TARGET_NAME} SHARED ${SOURCES} ${HEADERS})
+target_include_directories(${TARGET_NAME} PUBLIC ${qpOASES_INCLUDE_DIR} )
 target_link_libraries(${TARGET_NAME} PUBLIC
                       wbc-core
-                      PkgConfig::qpOASES)
+                      ${qpOASES_LIBRARY})
 
 set_target_properties(${TARGET_NAME} PROPERTIES
        VERSION ${PROJECT_VERSION}

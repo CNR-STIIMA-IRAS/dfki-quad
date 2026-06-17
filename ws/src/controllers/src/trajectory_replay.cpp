@@ -761,6 +761,7 @@ class TrajectoryReplay : public rclcpp::Node {
             joint_state_goal_.velocity[i] = 0.0;
 
           } else {
+            theta = y_vec_initPose[i]; // NP Patch .... theta is not initialized and used below ... I do not know if it is the correct logic ...
             joint_state_goal_.position[i] = y[i];
             joint_state_goal_.velocity[i] = 0.;
           }
@@ -915,6 +916,7 @@ class TrajectoryReplay : public rclcpp::Node {
             joint_state_goal_.velocity[i] = 0.0;
 
           } else {
+            theta = y_vec_initPose[i]; // NP Patch .... theta is not initialized and used below ... I do not know if it is the correct logic ...
             joint_state_goal_.position[i] = y[i];
             joint_state_goal_.velocity[i] = 0.;
           }

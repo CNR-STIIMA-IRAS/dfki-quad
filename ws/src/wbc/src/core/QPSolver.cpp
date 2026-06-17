@@ -10,3 +10,4 @@ QPSolver::~QPSolver(){
 
 QPSolverFactory::QPSolverMap* QPSolverFactory::qp_solver_map = 0;
 }
+

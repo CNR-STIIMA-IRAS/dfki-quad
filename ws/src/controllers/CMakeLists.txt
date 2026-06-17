@@ -33,13 +33,8 @@ endif ()
 
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
-IF (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-else ()
-    set(CMAKE_CXX_FLAGS_RELEASE "-Ofast")
-    message(WARNING "detected non ARM architecture, applying -Ofast - this might be harmfull!")
-endif ()
 
+option(USE_WBC ON)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -74,6 +69,7 @@ find_package(acados REQUIRED)
 find_package(Matplot++ REQUIRED)
 find_package(unitree_go REQUIRED)
 find_package(fmt REQUIRED)
+find_package(qpOASES REQUIRED)
 find_package(PkgConfig REQUIRED)
 
 set(MATPLOT_SANITIZER_LINK_FLAGS "")
@@ -267,9 +263,17 @@ foreach(optional_solver IN ITEMS eiquadprog qpswift proxqp osqp hpipm)
         list(APPEND WBC_SOLVER_TARGETS PkgConfig::wbc-solvers-${optional_solver})
         string(TOUPPER "${optional_solver}" optional_solver_upper)
         target_compile_definitions(
-                mitcontrollernode PRIVATE WBC_HAS_${optional_solver_upper})
+                mitcontrollernode PRIVATE WBC_HAS_${optional_solver_upper} )
     endif()
 endforeach()
+
+if(USE_WBC)
+ target_compile_definitions(
+                mitcontrollernode PRIVATE USE_WBC=1 )
+elseif(USE_WBC)
+ target_compile_definitions(
+                mitcontrollernode PRIVATE USE_WBC=0 )
+endif()
 
 target_link_libraries(mitcontrollernode
         PkgConfig::wbc-core
@@ -281,19 +285,9 @@ target_link_libraries(mitcontrollernode
         PkgConfig::wbc-types
 )
 
-if (ROBOT_NAME STREQUAL "ulab")
-    target_compile_definitions(mitcontrollernode PUBLIC ROBOT_MODEL=ULAB)
-    MESSAGE(WARNING "Building for ulab quad")
-elseif (ROBOT_NAME STREQUAL "go2")
-    target_compile_definitions(mitcontrollernode PUBLIC ROBOT_MODEL=GO2)
-    MESSAGE(WARNING "Building for go2 quad")
-else ()
-    MESSAGE(FATAL_ERROR "Please specify robot model during build (ROBOT_NAME=${ROBOT_NAME})")
-endif ()
-
 target_compile_options(mitcontrollernode PRIVATE -Wall -Wextra -Wpedantic -Werror)
 target_ros_dependencies(mitcontrollernode Eigen3 common interfaces rclcpp)
-target_link_libraries(mitcontrollernode acados fmt::fmt)
+target_link_libraries(mitcontrollernode acados fmt::fmt ${qpOASES_LIBRARY})
 target_include_directories(
         mitcontrollernode
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

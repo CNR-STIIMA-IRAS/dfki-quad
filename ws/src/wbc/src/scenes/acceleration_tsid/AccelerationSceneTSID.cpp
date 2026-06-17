@@ -183,3 +183,4 @@ const types::JointCommand& AccelerationSceneTSID::solve(const HierarchicalQP& hq
 }
 
 }
+

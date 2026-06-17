@@ -26,7 +26,7 @@ endforeach ()
 set(AMENT_CMAKE_SYMLINK_INSTALL OFF CACHE BOOL "" FORCE)
 
 find_package(ament_cmake REQUIRED)
-find_package(qpOASES CONFIG REQUIRED)
+find_package(qpOASES REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem serialization)
@@ -55,25 +55,25 @@ option(SOLVER_HPIPM "Build the HPIPM solver, by default only qpoases is built" O
 option(WBC_BUILD_TESTING "Build WBC unit tests" OFF)
 option(WBC_BUILD_TUTORIALS "Build WBC tutorials" OFF)
 
-# WBC consumes qpOASES through pkg-config, while the workspace dependency only
-# exports CMake metadata. Generate adapters from the discovered CMake package.
-set(QPOASES_PKGCONFIG_DIR "${CMAKE_CURRENT_BINARY_DIR}/pkgconfig")
-file(MAKE_DIRECTORY "${QPOASES_PKGCONFIG_DIR}")
-set(QPOASES_PC_LIBDIR "${qpOASES_LIBRARY_DIR}")
-set(QPOASES_PC_LIBS "${qpOASES_LIBRARY}")
-configure_file(cmake/qpOASES.pc.in
-    "${QPOASES_PKGCONFIG_DIR}/qpOASES.pc" @ONLY)
-set(ENV{PKG_CONFIG_PATH} "${QPOASES_PKGCONFIG_DIR}:$ENV{PKG_CONFIG_PATH}")
+# # WBC consumes qpOASES through pkg-config, while the workspace dependency only
+# # exports CMake metadata. Generate adapters from the discovered CMake package.
+# set(QPOASES_PKGCONFIG_DIR "${CMAKE_CURRENT_BINARY_DIR}/pkgconfig")
+# file(MAKE_DIRECTORY "${QPOASES_PKGCONFIG_DIR}")
+# set(QPOASES_PC_LIBDIR "${qpOASES_LIBRARY_DIR}")
+# set(QPOASES_PC_LIBS "${qpOASES_LIBRARY}")
+# configure_file(cmake/qpOASES.pc.in
+#     "${QPOASES_PKGCONFIG_DIR}/qpOASES.pc" @ONLY)
+# set(ENV{PKG_CONFIG_PATH} "${QPOASES_PKGCONFIG_DIR}:$ENV{PKG_CONFIG_PATH}")
 
-set(QPOASES_INSTALL_PKGCONFIG_DIR
-    "${CMAKE_CURRENT_BINARY_DIR}/install-pkgconfig")
-file(MAKE_DIRECTORY "${QPOASES_INSTALL_PKGCONFIG_DIR}")
-set(QPOASES_PC_LIBDIR "${qpOASES_LIBRARY_DIR}")
-set(QPOASES_PC_LIBS "${qpOASES_LIBRARY}")
-configure_file(cmake/qpOASES.pc.in
-    "${QPOASES_INSTALL_PKGCONFIG_DIR}/qpOASES.pc" @ONLY)
-install(FILES "${QPOASES_INSTALL_PKGCONFIG_DIR}/qpOASES.pc"
-    DESTINATION lib/pkgconfig)
+# set(QPOASES_INSTALL_PKGCONFIG_DIR
+#     "${CMAKE_CURRENT_BINARY_DIR}/install-pkgconfig")
+# file(MAKE_DIRECTORY "${QPOASES_INSTALL_PKGCONFIG_DIR}")
+# set(QPOASES_PC_LIBDIR "${qpOASES_LIBRARY_DIR}")
+# set(QPOASES_PC_LIBS "${qpOASES_LIBRARY}")
+# configure_file(cmake/qpOASES.pc.in
+#     "${QPOASES_INSTALL_PKGCONFIG_DIR}/qpOASES.pc" @ONLY)
+# install(FILES "${QPOASES_INSTALL_PKGCONFIG_DIR}/qpOASES.pc"
+#     DESTINATION lib/pkgconfig)
 
 add_subdirectory(src)
 
@@ -97,5 +97,4 @@ else (DOXYGEN_FOUND)
     message("Doxygen need to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
 
-ament_environment_hooks(env-hooks/pkg_config_path.dsv)
 ament_package()

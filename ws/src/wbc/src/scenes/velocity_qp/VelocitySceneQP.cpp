@@ -152,3 +152,4 @@ const types::JointCommand& VelocitySceneQP::solve(const HierarchicalQP& hqp){
 }
 
 } // namespace wbc
+

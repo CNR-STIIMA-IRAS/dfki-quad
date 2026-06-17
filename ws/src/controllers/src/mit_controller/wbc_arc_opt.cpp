@@ -413,3 +413,4 @@ WBCReturn WBCArcOPT::GetJointCommand(JointTorqueVelocityPositionCommands& joint_
       std::chrono::duration_cast<std::chrono::duration<double>>(wbc_solve_toc - wbc_solve_tic).count(),
   };
 }
+
