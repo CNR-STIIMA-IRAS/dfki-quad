@@ -688,7 +688,6 @@ void QuadModelSymbolic::CalcFwdKinLegBody(int leg_indx,
 }
 const Vector<double, 130> &QuadModelSymbolic::GetAllDynamicParameters() {
   throw std::runtime_error("Not implemented");
-  return Eigen::Vector<double, 130>::Zero();
 }
 
 void QuadModelSymbolic::CalcJacobianLegBase(int leg_index, Vector3d joint_pos, Matrix3d &Jac_legBaseToFoot) const {
@@ -780,7 +779,7 @@ void QuadModelSymbolic::calcGeneralizedMassInetiaMatrix(int leg_index,
   }
 }
 void QuadModelSymbolic::calcLeftLegGeneralizedMassInetiaMatrix(Vector3d joint_pos, Matrix3d &MassMatrix_legBase) const {
-  double q1 = joint_pos[0], q2 = joint_pos[1], q3 = joint_pos[2];
+  double q2 = joint_pos[1], q3 = joint_pos[2];
   MassMatrix_legBase.setZero();
   double t2 = std::cos(q2);
   double t3 = std::cos(q3);
@@ -790,7 +789,6 @@ void QuadModelSymbolic::calcLeftLegGeneralizedMassInetiaMatrix(Vector3d joint_po
   double t7 = l0_ * l0_;
   double t8 = l1_ * l1_;
   double t9 = q2 * 2.0;
-  double t10 = q3 * 2.0;
   double t11 = std::cos(t9);
   double t12 = I2xy * t2;
   double t13 = I2yz * t4;
@@ -834,7 +832,7 @@ void QuadModelSymbolic::calcLeftLegGeneralizedMassInetiaMatrix(Vector3d joint_po
 void QuadModelSymbolic::calcRightLegGeneralizedMassInetiaMatrix(Vector3d joint_pos,
                                                                 Matrix3d &MassMatrix_legBase) const {
   int sideSign = -1;
-  double q1 = joint_pos[0], q2 = joint_pos[1], q3 = joint_pos[2];
+  double q2 = joint_pos[1], q3 = joint_pos[2];
   MassMatrix_legBase.setZero();
   double t2 = std::cos(q2);
   double t3 = std::cos(q3);
@@ -844,7 +842,6 @@ void QuadModelSymbolic::calcRightLegGeneralizedMassInetiaMatrix(Vector3d joint_p
   double t7 = l0_ * l0_;
   double t8 = l1_ * l1_;
   double t9 = q2 * 2.0;
-  double t10 = q3 * 2.0;
   double t11 = std::cos(t9);
   double t12 = I2xy * t2;
   double t13 = I2yz * t4;
@@ -902,7 +899,7 @@ void QuadModelSymbolic::calcLeftLegGeneralizedCoriolisCentrifugalMatrix(Vector3d
                                                                         Vector3d joint_vel,
                                                                         Matrix3d &CoriolisMatrix_legBase) const {
   CoriolisMatrix_legBase.setZero();
-  double q1 = joint_pos[0], q2 = joint_pos[1], q3 = joint_pos[2];
+  double q2 = joint_pos[1], q3 = joint_pos[2];
   double dq1 = joint_vel[0], dq2 = joint_vel[1], dq3 = joint_vel[2];
   double t2 = std::cos(q2);
   double t3 = std::cos(q3);
@@ -911,7 +908,6 @@ void QuadModelSymbolic::calcLeftLegGeneralizedCoriolisCentrifugalMatrix(Vector3d
   double t6 = q2 + q3;
   double t7 = l1_ * l1_;
   double t8 = q2 * 2.0;
-  double t9 = q3 * 2.0;
   double t10 = std::cos(t8);
   double t11 = std::sin(t8);
   double t12 = std::cos(t6);
@@ -987,9 +983,8 @@ void QuadModelSymbolic::calcLeftLegGeneralizedCoriolisCentrifugalMatrix(Vector3d
 void QuadModelSymbolic::calcRightLegGeneralizedCoriolisCentrifugalMatrix(Vector3d joint_pos,
                                                                          Vector3d joint_vel,
                                                                          Matrix3d &CoriolisMatrix_legBase) const {
-  int sideSign = -1;
   CoriolisMatrix_legBase.setZero();
-  double q1 = joint_pos[0], q2 = joint_pos[1], q3 = joint_pos[2];
+  double q2 = joint_pos[1], q3 = joint_pos[2];
   double dq1 = joint_vel[0], dq2 = joint_vel[1], dq3 = joint_vel[2];
   double t2 = std::cos(q2);
   double t3 = std::cos(q3);
@@ -998,7 +993,6 @@ void QuadModelSymbolic::calcRightLegGeneralizedCoriolisCentrifugalMatrix(Vector3
   double t6 = q2 + q3;
   double t7 = l1_ * l1_;
   double t8 = q2 * 2.0;
-  double t9 = q3 * 2.0;
   double t10 = std::cos(t8);
   double t11 = std::sin(t8);
   double t12 = std::cos(t6);
@@ -1138,7 +1132,6 @@ void QuadModelSymbolic::computeLeftLegInverseDynamics(Vector3d joint_pos,
   double t14 = l0_ * l0_;
   double t15 = l1_ * l1_;
   double t16 = q2 * 2.0;
-  double t17 = q3 * 2.0;
   double t25 = -q1;
   double t26 = -q2;
   double t18 = std::cos(t16);
@@ -1244,7 +1237,6 @@ void QuadModelSymbolic::computeRightLegInverseDynamics(Vector3d joint_pos,
   double t14 = l0_ * l0_;
   double t15 = l1_ * l1_;
   double t16 = q2 * 2.0;
-  double t17 = q3 * 2.0;
   double t25 = -q1;
   double t26 = -q2;
   double t18 = std::cos(t16);
@@ -1434,6 +1426,8 @@ void QuadModelSymbolic::ComputeEstimatedForces(
 void QuadModelSymbolic::ComputeRegressorMatrix(
     const StateInterface &state,
     Eigen::Matrix<double, ModelInterface::NUM_JOINTS + 6, (ModelInterface::NUM_JOINTS + 1) * 10> &regressor) const {
+  (void)state;
+  (void)regressor;
   throw std::runtime_error("ComputeRegressorMatrix Not implement, as it would be a ridiculous effort.");
 }
 void QuadModelSymbolic::SetInertia(const Eigen::Matrix3d &inertia_tensor) { base_inertia_ = inertia_tensor; }

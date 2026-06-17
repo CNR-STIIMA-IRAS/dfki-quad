@@ -405,6 +405,7 @@ DrakeSimulator::DrakeSimulator() : restart_sim_(true) {
           [reference_link_idx](const auto &sim_dist, auto &output) {
             drake::multibody::ExternallyAppliedSpatialForce<double> Fext;
             Fext.body_index = reference_link_idx;
+            Fext.p_BoBq_B.setZero();
             Eigen::Vector3d f, tau;
             for (int i = 0; i < 3; ++i) {
               f(i) = sim_dist.force[i];

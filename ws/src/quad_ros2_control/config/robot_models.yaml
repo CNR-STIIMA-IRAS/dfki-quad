@@ -1,0 +1,20 @@
+robots:
+  go2:
+    simulator_urdf: "package://common/model/urdf/go2/urdf/go2_description.urdf"
+    controller_description_xacro: "package://quad_ros2_control/urdf/go2_topic_based.ros2_control.xacro"
+    controller_manager_config: "package://quad_ros2_control/config/controller_manager_go2.yaml"
+    simulator_config: "package://simulator/config/simulator_params_go2.yaml"
+    common_config: "package://common/config/common_config_go2.yaml"
+    mit_controller_config: "package://controllers/config/mit_controller_sim_go2.yaml"
+    joint_commands_topic: "/joint_cmd"
+    joint_states_topic: "/joint_states"
+
+  ulab:
+    simulator_urdf: "package://common/model/urdf/quad.urdf"
+    controller_description_xacro: ""
+    controller_manager_config: ""
+    simulator_config: "package://simulator/config/simulator_params_ulab.yaml"
+    common_config: "package://common/config/common_config_ulab.yaml"
+    mit_controller_config: "package://controllers/config/mit_controller_sim_ulab.yaml"
+    joint_commands_topic: "/joint_cmd"
+    joint_states_topic: "/joint_states"

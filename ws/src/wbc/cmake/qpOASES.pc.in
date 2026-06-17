@@ -6,5 +6,5 @@ includedir=@qpOASES_INCLUDE_DIR@
 Name: qpOASES
 Description: Online active-set strategy quadratic programming solver
 Version: @qpOASES_VERSION@
-Libs: -L${libdir} -lqpOASES_pic
+Libs: @QPOASES_PC_LIBS@
 Cflags: -I${includedir}

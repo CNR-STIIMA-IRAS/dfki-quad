@@ -8,7 +8,13 @@ PositionsVizualiser::PositionsVizualiser(drake::geometry::Meshcat &meshcat,
                                          const double point_size,
                                          const drake::geometry::Rgba &color,
                                          const std::string &prefix_name)
-    : meshcat_(meshcat), num_positions_(0), point_size_(point_size), color_(color), prefix_name_(prefix_name) {
+    : meshcat_(meshcat),
+      num_positions_(0),
+      point_size_(point_size),
+      prefix_name_(prefix_name),
+      positions_input_port_(nullptr),
+      visible_input_port_(nullptr),
+      color_(color) {
   updateNumberOfPositions(num_positions);  // Will internally update num_positions_
   // create ports
   positions_input_port_ =

@@ -1,0 +1,34 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 500
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    mit_controller:
+      type: controllers/MITController
+
+mit_controller:
+  ros__parameters:
+    joints:
+      - fl_abad
+      - fl_shoulder
+      - fl_knee
+      - fr_abad
+      - fr_shoulder
+      - fr_knee
+      - bl_abad
+      - bl_shoulder
+      - bl_knee
+      - br_abad
+      - br_shoulder
+      - br_knee
+    command_interfaces:
+      - position
+      - velocity
+      - effort
+    state_interfaces:
+      - position
+      - velocity
+      - effort
+

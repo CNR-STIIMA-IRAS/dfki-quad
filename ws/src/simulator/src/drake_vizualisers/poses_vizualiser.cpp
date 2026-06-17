@@ -10,7 +10,12 @@ PosesVizualiser::PosesVizualiser(drake::geometry::Meshcat &meshcat,
                                  const int num_poses,
                                  const double width,
                                  const double len)
-    : name_prefix_(name_prefix), meshcat_(meshcat), num_poses_(0), width_(width), len_(len) {
+    : meshcat_(meshcat),
+      num_poses_(0),
+      width_(width),
+      len_(len),
+      name_prefix_(name_prefix),
+      poses_input_port_(nullptr) {
   // create all arrows in meshcat
   move_up_ = drake::math::RigidTransformd(Eigen::Vector3d(0., 0., len_ / 2.0));
   z_to_x_ =

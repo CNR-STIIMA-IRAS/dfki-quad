@@ -217,8 +217,15 @@ class DrakeVisualizer : public rclcpp::Node {
     static Eigen::VectorXd quad_state(19);
     static Value<std::vector<bool>> ee_pos_visible(std::vector<bool>(4, false));
     static Value<std::vector<Eigen::Vector3d>> ee_pos(std::vector<Eigen::Vector3d>(4, Eigen::Vector3d::Zero()));
-    static Value<std::vector<multibody::ExternallyAppliedSpatialForce<double>>> ee_force(
-        std::vector<multibody::ExternallyAppliedSpatialForce<double>>(4));
+    static Value<std::vector<multibody::ExternallyAppliedSpatialForce<double>>> ee_force([] {
+      std::vector<multibody::ExternallyAppliedSpatialForce<double>> forces(4);
+      for (auto &force : forces) {
+        force.body_index = multibody::BodyIndex(0);
+        force.p_BoBq_B.setZero();
+        force.F_Bq_W.SetZero();
+      }
+      return forces;
+    }());
     static Value<std::vector<math::RigidTransformd>> ee_body_pose(
         std::vector<math::RigidTransformd>(4, math::RigidTransformd::Identity()));
 

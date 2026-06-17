@@ -4,6 +4,23 @@ if(POLICY CMP0167)
 endif()
 project(wbc)
 
+find_program(ROS_SYSTEM_PYTHON3 python3 PATHS /usr/bin /bin NO_DEFAULT_PATH)
+if (ROS_SYSTEM_PYTHON3)
+    set(Python3_EXECUTABLE "${ROS_SYSTEM_PYTHON3}" CACHE FILEPATH "Python interpreter used by ament_cmake" FORCE)
+endif ()
+
+file(GLOB ROS_PYTHON_SITE_PACKAGES "/opt/ros/*/lib/python*/site-packages")
+foreach (ROS_PYTHON_SITE_PACKAGE IN LISTS ROS_PYTHON_SITE_PACKAGES)
+    if (EXISTS "${ROS_PYTHON_SITE_PACKAGE}/ament_package")
+        if (DEFINED ENV{PYTHONPATH})
+            set(ENV{PYTHONPATH} "${ROS_PYTHON_SITE_PACKAGE}:$ENV{PYTHONPATH}")
+        else ()
+            set(ENV{PYTHONPATH} "${ROS_PYTHON_SITE_PACKAGE}")
+        endif ()
+    endif ()
+endforeach ()
+
+
 # The nested upstream install tree is incompatible with ament's symlink
 # install override. Install this package using standard CMake copy semantics.
 set(AMENT_CMAKE_SYMLINK_INSTALL OFF CACHE BOOL "" FORCE)
@@ -38,27 +55,12 @@ option(SOLVER_HPIPM "Build the HPIPM solver, by default only qpoases is built" O
 option(WBC_BUILD_TESTING "Build WBC unit tests" OFF)
 option(WBC_BUILD_TUTORIALS "Build WBC tutorials" OFF)
 
-# qpOASES is installed by its workspace package as a non-PIC static archive.
-# Build a private PIC copy so it can be linked into WBC's shared solver.
-set(QPOASES_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../deps/qpOASES")
-if(NOT EXISTS "${QPOASES_SOURCE_DIR}/CMakeLists.txt")
-    message(FATAL_ERROR "qpOASES source not found at ${QPOASES_SOURCE_DIR}")
-endif()
-file(GLOB QPOASES_SOURCES CONFIGURE_DEPENDS
-     "${QPOASES_SOURCE_DIR}/src/*.cpp")
-add_library(qpOASES_pic STATIC ${QPOASES_SOURCES})
-set_target_properties(qpOASES_pic PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/qpoases_pic_lib")
-target_compile_definitions(qpOASES_pic PRIVATE __NO_COPYRIGHT__ LINUX)
-target_include_directories(qpOASES_pic PUBLIC "${QPOASES_SOURCE_DIR}/include")
-install(TARGETS qpOASES_pic ARCHIVE DESTINATION lib)
-
 # WBC consumes qpOASES through pkg-config, while the workspace dependency only
-# exports CMake metadata. Generate adapters for this build and the install tree.
+# exports CMake metadata. Generate adapters from the discovered CMake package.
 set(QPOASES_PKGCONFIG_DIR "${CMAKE_CURRENT_BINARY_DIR}/pkgconfig")
 file(MAKE_DIRECTORY "${QPOASES_PKGCONFIG_DIR}")
-set(QPOASES_PC_LIBDIR "${CMAKE_CURRENT_BINARY_DIR}/qpoases_pic_lib")
+set(QPOASES_PC_LIBDIR "${qpOASES_LIBRARY_DIR}")
+set(QPOASES_PC_LIBS "${qpOASES_LIBRARY}")
 configure_file(cmake/qpOASES.pc.in
     "${QPOASES_PKGCONFIG_DIR}/qpOASES.pc" @ONLY)
 set(ENV{PKG_CONFIG_PATH} "${QPOASES_PKGCONFIG_DIR}:$ENV{PKG_CONFIG_PATH}")
@@ -66,14 +68,14 @@ set(ENV{PKG_CONFIG_PATH} "${QPOASES_PKGCONFIG_DIR}:$ENV{PKG_CONFIG_PATH}")
 set(QPOASES_INSTALL_PKGCONFIG_DIR
     "${CMAKE_CURRENT_BINARY_DIR}/install-pkgconfig")
 file(MAKE_DIRECTORY "${QPOASES_INSTALL_PKGCONFIG_DIR}")
-set(QPOASES_PC_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib")
+set(QPOASES_PC_LIBDIR "${qpOASES_LIBRARY_DIR}")
+set(QPOASES_PC_LIBS "${qpOASES_LIBRARY}")
 configure_file(cmake/qpOASES.pc.in
     "${QPOASES_INSTALL_PKGCONFIG_DIR}/qpOASES.pc" @ONLY)
 install(FILES "${QPOASES_INSTALL_PKGCONFIG_DIR}/qpOASES.pc"
     DESTINATION lib/pkgconfig)
 
 add_subdirectory(src)
-add_dependencies(wbc-solvers-qpoases qpOASES_pic)
 
 if(WBC_BUILD_TUTORIALS)
     add_subdirectory(tutorials)

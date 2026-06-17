@@ -1,5 +1,25 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.10)
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 NEW)
+endif()
 project(state_estimation)
+
+find_program(ROS_SYSTEM_PYTHON3 python3 PATHS /usr/bin /bin NO_DEFAULT_PATH)
+if (ROS_SYSTEM_PYTHON3)
+    set(Python3_EXECUTABLE "${ROS_SYSTEM_PYTHON3}" CACHE FILEPATH "Python interpreter used by ament_cmake" FORCE)
+endif ()
+
+file(GLOB ROS_PYTHON_SITE_PACKAGES "/opt/ros/*/lib/python*/site-packages")
+foreach (ROS_PYTHON_SITE_PACKAGE IN LISTS ROS_PYTHON_SITE_PACKAGES)
+    if (EXISTS "${ROS_PYTHON_SITE_PACKAGE}/ament_package")
+        if (DEFINED ENV{PYTHONPATH})
+            set(ENV{PYTHONPATH} "${ROS_PYTHON_SITE_PACKAGE}:$ENV{PYTHONPATH}")
+        else ()
+            set(ENV{PYTHONPATH} "${ROS_PYTHON_SITE_PACKAGE}")
+        endif ()
+    endif ()
+endforeach ()
+
 
 set(CMAKE_BUILD_TYPE Release)
 
