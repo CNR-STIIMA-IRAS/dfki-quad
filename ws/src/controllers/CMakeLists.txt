@@ -72,15 +72,6 @@ find_package(fmt REQUIRED)
 find_package(qpOASES REQUIRED)
 find_package(PkgConfig REQUIRED)
 
-set(MATPLOT_SANITIZER_LINK_FLAGS "")
-set(MATPLOT_SANITIZER_RUNTIME_LIBS "")
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    # Workspace matplot++ may be built with ASan/UBSan instrumentation.
-    # Add runtime linkage to prevent unresolved __asan/__ubsan symbols.
-    set(MATPLOT_SANITIZER_LINK_FLAGS -fsanitize=address -fsanitize=undefined)
-    list(APPEND MATPLOT_SANITIZER_RUNTIME_LIBS asan ubsan)
-endif ()
-
 function(target_ros_dependencies target)
     foreach(dependency IN LISTS ARGN)
         if(dependency STREQUAL "Eigen3")
@@ -141,93 +132,6 @@ if (BUILD_TESTING)
     # to all source files
     set(ament_cmake_cpplint_FOUND TRUE)
     ament_lint_auto_find_test_dependencies()
-endif ()
-
-
-# ##############################################################################
-# --- Trajectory Controller --- #
-# ##############################################################################
-
-if (NOT WITHOUT_DRAKE)
-    add_executable(trajectory_replay src/trajectory_replay.cpp)
-
-    target_ros_dependencies(trajectory_replay interfaces rclcpp ament_index_cpp
-            sensor_msgs geometry_msgs common)
-    target_link_libraries(trajectory_replay common::quad_model_symbolic)
-
-    target_include_directories(
-            trajectory_replay
-            PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-            $<INSTALL_INTERFACE:include>)
-    install(TARGETS trajectory_replay DESTINATION lib/${PROJECT_NAME})
-
-endif ()
-# ##############################################################################
-# --- Gait Plotting --- #
-# ##############################################################################
-
-add_executable(gait_plotting src/tools/plotting.cpp)
-
-target_ros_dependencies(gait_plotting Eigen3 interfaces rclcpp common
-)
-target_link_libraries(gait_plotting Matplot++::matplot ${MATPLOT_SANITIZER_RUNTIME_LIBS})
-target_link_options(gait_plotting PRIVATE ${MATPLOT_SANITIZER_LINK_FLAGS})
-
-target_include_directories(
-        gait_plotting
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>)
-
-# ##############################################################################
-# --- Gait Sequence Plotting --- #
-# ##############################################################################
-
-add_executable(gait_sequence_plotting src/tools/plot_gs.cpp)
-
-target_ros_dependencies(gait_sequence_plotting Eigen3 interfaces rclcpp common
-)
-target_link_libraries(gait_sequence_plotting Matplot++::matplot ${MATPLOT_SANITIZER_RUNTIME_LIBS})
-target_link_options(gait_sequence_plotting PRIVATE ${MATPLOT_SANITIZER_LINK_FLAGS})
-
-target_include_directories(
-        gait_sequence_plotting
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>)
-
-# ##############################################################################
-# --- MIT CONTROLLER--- #
-# ##############################################################################
-if (NOT WITHOUT_DRAKE)
-    add_executable(mitcontroller
-            src/mit_controller/mit_controller.cpp
-            src/mit_controller/mpc.cpp
-            src/mit_controller/gait.cpp
-            src/mit_controller/simple_gait_sequencer.cpp
-            src/mit_controller/bio_gait_sequencer.cpp
-            src/mit_controller/adaptive_gait_sequencer.cpp
-            src/mit_controller/mpc_trajectory_planner.cpp
-            src/mit_controller/raibert_foot_step_planner.cpp
-            src/mit_controller/swing_leg_controller.cpp
-            src/potato_sim/potato_sim.cpp
-            src/potato_sim/potato_model.cpp
-            src/SwingTrajectory.cpp
-            src/model_adaptation/least_squares_model_adaptation.cpp
-            src/model_adaptation/kf_model_adaptation.cpp
-    )
-
-    target_ros_dependencies(mitcontroller Eigen3 interfaces common drake simulator)
-    target_link_libraries(mitcontroller acados Matplot++::matplot ${MATPLOT_SANITIZER_RUNTIME_LIBS})
-    target_link_options(mitcontroller PRIVATE ${MATPLOT_SANITIZER_LINK_FLAGS})
-    target_compile_options(mitcontroller PRIVATE -Wall -Wextra -Wpedantic -Werror)
-    ament_export_targets(mitcontroller HAS_LIBRARY_TARGET)
-    install(
-            TARGETS mitcontroller
-            EXPORT mitcontroller
-            LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib
-            RUNTIME DESTINATION bin
-            INCLUDES
-            DESTINATION include)
 endif ()
 
 
@@ -298,74 +202,26 @@ target_include_directories(
 # ##############################################################################
 # --- test Swing leg Controller --- #
 # ##############################################################################
+if(BUILD_TESTING)
+    add_executable(testSwingTrajectoryControllerNode tests/testSwingTrajectoryControllerNode.cpp
+            src/SwingTrajectory.cpp)
 
-add_executable(testSwingTrajectoryControllerNode src/testSwingTrajectoryControllerNode.cpp
-        src/SwingTrajectory.cpp)
+    target_link_libraries(testSwingTrajectoryControllerNode Eigen3::Eigen interfaces::interfaces__rosidl_typesupport_cpp rclcpp::rclcpp ament_index_cpp::ament_index_cpp
+            sensor_msgs::sensor_msgs__rosidl_typesupport_cpp geometry_msgs::geometry_msgs__rosidl_typesupport_cpp common::quad_model_pino)
 
-target_ros_dependencies(testSwingTrajectoryControllerNode Eigen3 interfaces rclcpp ament_index_cpp
-        sensor_msgs geometry_msgs common)
-
-target_include_directories(
-        testSwingTrajectoryControllerNode
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-)
-
-# ##############################################################################
-# --- Sys ID Leg Controller --- #
-# ##############################################################################
-
-add_executable(SysIDLegControllerNode src/system_identification/SysIDLegControllerNode.cpp src/system_identification/SysIDTrajectory.cpp)
-
-target_ros_dependencies(SysIDLegControllerNode Eigen3 interfaces rclcpp common)
-target_link_libraries(SysIDLegControllerNode common::quad_model_symbolic)
-
-target_include_directories(
-        SysIDLegControllerNode
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-)
-
-
-# ##############################################################################
-# --- CPU power consumption logging--- #
-# ##############################################################################
-add_executable(log_cpu_power src/tools/log_cpu_power.cpp)
-
-target_ros_dependencies(log_cpu_power
-        rclcpp
-        std_msgs
-)
-
-target_include_directories(
-        log_cpu_power
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-)
-
-
-# ##############################################################################
-# Install nodes #
-# ##############################################################################
-
-##############################
-# Python package and scripts #
-##############################
-
-ament_python_install_package(${PROJECT_NAME})
-install(PROGRAMS scripts/joy_to_target.py DESTINATION lib/${PROJECT_NAME})
-install(PROGRAMS scripts/quad_stand_up.py DESTINATION lib/${PROJECT_NAME})
+    target_include_directories(
+            testSwingTrajectoryControllerNode
+            PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
+    )
+endif()
 
 #########
 # Share #
 #########
 
-if (NOT WITHOUT_DRAKE)
-    install(TARGETS trajectory_replay gait_plotting gait_sequence_plotting log_cpu_power testSwingTrajectoryControllerNode SysIDLegControllerNode mitcontrollernode DESTINATION lib/${PROJECT_NAME})
-else ()
-    install(TARGETS gait_plotting gait_sequence_plotting log_cpu_power testSwingTrajectoryControllerNode SysIDLegControllerNode mitcontrollernode DESTINATION lib/${PROJECT_NAME})
-endif ()
+install(TARGETS mitcontrollernode DESTINATION lib/${PROJECT_NAME})
 
-install(DIRECTORY launch config trajectories DESTINATION share/${PROJECT_NAME}/)
+install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME}/)
 
 ament_package()

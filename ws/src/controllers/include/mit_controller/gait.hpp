@@ -3,7 +3,6 @@
 #include <array>
 #include <optional>
 #include <string>
-#include <vector>
 
 #include "common/filters.hpp"
 #include "mit_controller/gait_interface.hpp"
@@ -79,18 +78,6 @@ class BioInspiredGait : public Gait {
                               double phase,
                               double time,
                               const BioInspiredGait& new_gait) const;
-
-  //   void get_contact_transition(std::array<std::array<bool, N_LEGS>,
-  //                                          GAIT_SEQUENCE_SIZE>&
-  //                                          contact_sequence,
-  //                               double phase,
-  //                               const BioInspiredGait& new_gait) const;
-
-  // void get_swing_time_transition(
-  //     std::array<std::array<double, N_LEGS>, GAIT_SEQUENCE_SIZE>&
-  //         swing_time_transition,
-  //     double phase,
-  //     const BioInspiredGait& new_gait) const;
 
   void get_swing_time_transition(GaitSequence& gait_sequence,
                                  double phase,

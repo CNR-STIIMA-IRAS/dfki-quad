@@ -1,13 +1,10 @@
 #pragma once
 
 #include "common/model_interface.hpp"
-#include "common/quaternion_operations.hpp"
 #include "common/state_interface.hpp"
 #include "gait_sequence.hpp"
 #include "gait_sequencer_types.hpp"
 #include "interfaces/msg/gait_state.hpp"
-#include "potato_sim/potato_model.hpp"
-#include "rclcpp/time.hpp"
 #include "target.hpp"
 
 class GaitSequencerInterface {

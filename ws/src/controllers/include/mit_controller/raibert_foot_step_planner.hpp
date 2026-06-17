@@ -4,15 +4,11 @@
 #include <common/filters.hpp>
 #include <common/model_interface.hpp>
 #include <common/state_interface.hpp>
-#include <string>
 
-#include "common/quaternion_operations.hpp"
 #include "eigen3/Eigen/Dense"
 #include "gait_interface.hpp"
 #include "gait_sequence.hpp"
 #include "mit_controller_params.hpp"
-#include "potato_sim/potato_model.hpp"
-#include "target.hpp"
 
 class RaibertFootStepPlanner {
  public:

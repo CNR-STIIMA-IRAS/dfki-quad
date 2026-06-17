@@ -3,13 +3,12 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/float64.hpp>
 
-#include "common/custom_qos.hpp"
-#include "common/eigen_msg_conversions.hpp"
+
 #include "common/quad_model_pino.hpp"
 #include "common/quad_state.hpp"
-#include "common/sequence_containers.hpp"
 #include "interfaces/msg/controller_info.hpp"
 #include "interfaces/msg/joint_cmd.hpp"
+#include "interfaces/msg/gait_sequence.hpp"
 #include "interfaces/msg/leg_cmd.hpp"
 #include "interfaces/msg/mpc_diagnostics.hpp"
 #include "interfaces/msg/position_sequence.hpp"
@@ -21,20 +20,11 @@
 #include "interfaces/msg/wbc_return.hpp"
 #include "interfaces/msg/wbc_target.hpp"
 #include "interfaces/srv/change_leg_driver_mode.hpp"
-#include "mit_controller/adaptive_gait_sequencer.hpp"
-#include "mit_controller/gait_sequence_to_msg.hpp"
 #include "mit_controller/gait_sequencer_interface.hpp"
-#include "mit_controller/inverse_dynamics.hpp"
-#include "mit_controller/mit_controller_params.hpp"
 #include "mit_controller/mpc.hpp"
 #include "mit_controller/mpc_interface.hpp"
-#include "mit_controller/simple_gait_sequencer.hpp"
-#include "mit_controller/swing_leg_controller.hpp"
 #include "mit_controller/swing_leg_controller_interface.hpp"
-#include "mit_controller/wbc_arc_opt.hpp"
 #include "mit_controller/wbc_interface.hpp"
-#include "model_adaptation/kf_model_adaptation.hpp"
-#include "model_adaptation/least_squares_model_adaptation.hpp"
 #include "model_adaptation/model_adaptation_interface.hpp"
 
 class MITController : public rclcpp::Node {
@@ -105,7 +95,6 @@ class MITController : public rclcpp::Node {
   std::shared_ptr<rclcpp::ParameterEventCallbackHandle> parameter_event_callback_handle_;
 
   // Controller related members
-  // std::shared_ptr<MPCInterface> mpc_;
   std::unique_ptr<MPCInterface> mpc_;
   std::unique_ptr<GaitSequencerInterface> gs_;
   std::unique_ptr<SwingLegControllerInterface> slc_;
@@ -113,7 +102,6 @@ class MITController : public rclcpp::Node {
                            WBCInterface<JointTorqueVelocityPositionCommands>,
                            WBCInterface<CartesianCommands>>::type WBCType;
   std::unique_ptr<WBCType> wbc_;
-  // std::shared_ptr<ModelAdaptationInterface> ma_;
   std::unique_ptr<ModelAdaptationInterface> ma_;
   Target target_;
   GaitSequence gait_sequence_;

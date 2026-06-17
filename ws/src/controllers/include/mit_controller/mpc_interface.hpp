@@ -4,7 +4,6 @@
 
 #include "gait_sequence.hpp"
 #include "mpc_prediction.hpp"
-#include "potato_sim/potato_model.hpp"
 #include "wrench_sequence.hpp"
 
 struct SolverInformation {

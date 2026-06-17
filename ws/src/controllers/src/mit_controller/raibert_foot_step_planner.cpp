@@ -1,10 +1,11 @@
 #include "raibert_foot_step_planner.hpp"
 
 #include <cmath>
-#include <common/model_interface.hpp>
-#include <common/state_interface.hpp>
-#include <vector>
+#include <iostream>
 
+#include "common/quaternion_operations.hpp"
+#include "common/model_interface.hpp"
+#include "common/state_interface.hpp"
 #include "gait_sequence.hpp"
 #include "mit_controller_params.hpp"
 

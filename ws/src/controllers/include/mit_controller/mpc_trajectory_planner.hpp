@@ -1,9 +1,14 @@
 #pragma once
 
-#include "common/quaternion_operations.hpp"
-#include "eigen3/Eigen/Dense"
+#include <iostream>
+#include <limits>
+#include <array>
+#include <algorithm>
+#include <Eigen/Dense>
+
+#include "common/model_interface.hpp"
+#include "common/state_interface.hpp"
 #include "gait_sequence.hpp"
-#include "potato_sim/potato_model.hpp"
 #include "target.hpp"
 
 class MPCTrajectoryPlanner {

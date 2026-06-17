@@ -4,6 +4,8 @@
 #include <common/state_interface.hpp>
 
 #include "common/quaternion_operations.hpp"
+#include "common/model_interface.hpp"
+#include "common/state_interface.hpp"
 #include "gait_sequence.hpp"
 #include "mit_controller_params.hpp"
 #include "target.hpp"
