@@ -1,0 +1,8 @@
+<library path="quad_mpc">
+  <class type="quad_mpc::MPCInterface_L4_H10_DT1000_S13" base_class_type="polygon_base::RegularPolygon">
+    <description>This is a square plugin.</description>
+  </class>
+  <class type="quad_mpc::MPCInterface_L4_H15_DT1000_S13" base_class_type="polygon_base::RegularPolygon">
+    <description>This is a square plugin.</description>
+  </class>
+</library>
