@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MIT_CONTROLLER_NODE_HPP
+#define MIT_CONTROLLER_NODE_HPP
 
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/float64.hpp>
@@ -22,17 +23,32 @@
 #include "interfaces/msg/wbc_return.hpp"
 #include "interfaces/msg/wbc_target.hpp"
 #include "interfaces/srv/change_leg_driver_mode.hpp"
+#include "gait_controller/gait_reference_trajectory_planner.hpp"
 #include "gait_controller/gait_sequencer_interface.hpp"
 
-#include "mit_controller/joint_commands.hpp"
-#include "mit_controller/wbc_interface.hpp"
+#include "common/joint_commands.hpp"
+#include "quad_wbc/wbc_interface.hpp"
 #include "quad_mpc/quad_mpc.hpp"
 #include "quad_mpc/wrench_sequence.hpp"
 #include "quad_mpc/quad_mpc_prediction.hpp"
 
-#include "mit_controller/swing_leg_controller_interface.hpp"
-#include "model_adaptation/model_adaptation_interface.hpp"
-#include "mpc_trajectory_planner.hpp"
+#include "quad_swing_controller/swing_leg_controller_interface.hpp"
+#include "quad_model_adaptation/model_adaptation_interface.hpp"
+
+
+#include "common/constants.hpp"
+
+static constexpr int FEET_POSITION_SEQUENCE_SIZE = int((MPC_DT / MPC_CONTROL_DT) * GAIT_SEQUENCE_SIZE);
+
+// message publishers
+static const bool PUBLISH_SWING_LEG_TRAJECTORIES = false;
+static const bool PUBLISH_GAIT_STATE = true;
+static const bool PUBLISH_OPEN_LOOP_TRAJECTORY = true;
+static const bool PUBLISH_SOLVE_TIME = true;
+static const bool PUBLISH_WBC_SOLVE_TIME = true;
+static const bool PUBLISH_WBC_TARGET = true;
+static const bool PUBLISH_GAIT_SEQUENCE = true;
+static const bool PUBLISH_HEARTBEAT = true;
 
 class MITController : public rclcpp::Node {
  public:
@@ -103,7 +119,7 @@ class MITController : public rclcpp::Node {
 
   // Controller related members
   std::unique_ptr<quad_mpc::MPCInterface> mpc_;
-  std::unique_ptr<MPCTrajectoryPlanner> mpc_tp_;
+  std::unique_ptr<GaitReferenceTrajectoryPlanner> mpc_tp_;
   std::unique_ptr<GaitSequencerInterface> gs_;
   std::unique_ptr<SwingLegControllerInterface> slc_;
   typedef std::conditional<USE_WBC,
@@ -145,7 +161,7 @@ class MITController : public rclcpp::Node {
   QuadState quad_state_;
   QuadModelPino quad_model_;
 
-  std::unique_ptr<MPCTrajectoryPlanner> GetMPCTrajectoryPlannerFromParams(const ModelInterface& model,
+  std::unique_ptr<GaitReferenceTrajectoryPlanner> GetMPCTrajectoryPlannerFromParams(const ModelInterface& model,
                                                                      const StateInterface& state) const;
 
   std::unique_ptr<GaitSequencerInterface> GetGaitSequencerFromParams(std::unique_ptr<ModelInterface> model,
@@ -162,3 +178,5 @@ class MITController : public rclcpp::Node {
   void ModelAdaptationCallback();
   void HartbeatCallback();
 };
+
+#endif // MIT_CONTROLLER_NODE_HPP

@@ -24,22 +24,26 @@
 #include "interfaces/msg/wbc_return.hpp"
 #include "interfaces/msg/wbc_target.hpp"
 #include "interfaces/srv/change_leg_driver_mode.hpp"
+
 #include "gait_controller/adaptive_gait_sequencer.hpp"
 #include "gait_controller/gait_sequence_to_msg.hpp"
 
-#include "mit_controller/inverse_dynamics.hpp"
-#include "mit_controller/mit_controller_params.hpp"
+#include "quad_wbc/inverse_dynamics.hpp"
+#include "quad_wbc/wbc_arc_opt.hpp"
 
 #include "quad_mpc/quad_mpc_interface.hpp"
+
 #include "gait_controller/simple_gait_sequencer.hpp"
 
-#include "mit_controller/swing_leg_controller_interface.hpp"
-#include "mit_controller/swing_leg_controller.hpp"
-#include "mit_controller/wbc_arc_opt.hpp"
+
+#include "quad_swing_controller/swing_leg_controller_interface.hpp"
+#include "quad_swing_controller/swing_leg_controller.hpp"
+
+#include "quad_model_adaptation/least_squares_model_adaptation.hpp"
+#include "quad_model_adaptation/kf_model_adaptation.hpp"
 
 #include "mit_controller_node.hpp"
-#include "model_adaptation/least_squares_model_adaptation.hpp"
-#include "model_adaptation/kf_model_adaptation.hpp"
+
 
 MITController::MITController(const std::string &nodeName)
     : Node(nodeName),
@@ -858,11 +862,11 @@ std::unique_ptr<GaitSequencerInterface> MITController::GetGaitSequencerFromParam
 }
 
 
-std::unique_ptr<MPCTrajectoryPlanner> MITController::GetMPCTrajectoryPlannerFromParams(
+std::unique_ptr<GaitReferenceTrajectoryPlanner> MITController::GetMPCTrajectoryPlannerFromParams(
     const ModelInterface& model, const StateInterface& state) const {
 
-  return std::make_unique<MPCTrajectoryPlanner>(
-      MPCTrajectoryPlanner( MPC_DT,
+  return std::make_unique<GaitReferenceTrajectoryPlanner>(
+      GaitReferenceTrajectoryPlanner( MPC_DT,
                             state,
                             model,
                             this->get_parameter("fix_standing_position").as_bool(),

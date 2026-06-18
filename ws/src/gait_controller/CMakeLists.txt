@@ -17,6 +17,7 @@ add_library(gait_controller SHARED
   src/gait_controller/gait.cpp 
   src/gait_controller/simple_gait_sequencer.cpp
   src/gait_controller/raibert_foot_step_planner.cpp
+  src/gait_controller/gait_reference_trajectory_planner.cpp
 )
 
 target_link_libraries(gait_controller

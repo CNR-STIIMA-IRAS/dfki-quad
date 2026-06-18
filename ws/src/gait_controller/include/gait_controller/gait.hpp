@@ -8,7 +8,6 @@
 #include "gait_controller/gait_interface.hpp"
 #include "gait_controller/gait_sequence.hpp"
 #include "gait_controller/raibert_foot_step_planner.hpp"
-// #include "gait_controller/mit_controller_params.hpp"
 
 class Gait : public GaitInterface {
  public:

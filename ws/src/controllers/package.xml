@@ -22,8 +22,10 @@
   <depend>interfaces</depend>
   <depend>simulator</depend>
   <depend>common</depend>
-  <depend>wbc</depend>
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
   <depend>gait_controller</depend>
+  <depend>quad_mpc</depend>
+  <depend>quad_wbc</depend>
+  <depend>quad_model_adaptation</depend>
 </package>

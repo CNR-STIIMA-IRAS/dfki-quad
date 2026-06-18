@@ -1,0 +1,47 @@
+#pragma once
+
+#include <iostream>
+#include <limits>
+#include <array>
+#include <algorithm>
+#include <Eigen/Dense>
+
+#include "common/model_interface.hpp"
+#include "common/state_interface.hpp"
+#include "common/target.hpp"
+
+#include "gait_controller/gait_sequence.hpp"
+
+class GaitReferenceTrajectoryPlanner {
+ public:
+  GaitReferenceTrajectoryPlanner(double dt,
+                       const StateInterface &quad_state,
+                       const ModelInterface &quad_model,
+                       bool fix_standing_position,
+                       double distance_threshold,
+                       double angular_threshold,
+                       double velocity_threshold);
+  void plan_trajectory(GaitSequence &sequence, const Target &target);
+
+ private:
+  void plan_desired_trajectory(GaitSequence &sequence, const Target &target);
+  void set_sequence_mode(GaitSequence &sequence, const Target &target);
+  void set_current_target(GaitSequence &sequence, const Target &target);
+  inline double get_min_foot_height() {
+    double min_foot_height = *std::min_element(foot_heights_.begin(), foot_heights_.end());
+    if (min_foot_height == std::numeric_limits<double>::max()) {
+      min_foot_height = 0;
+      std::cout << "foot height not yet calculated, robot might drop" << std::endl;
+    }
+    return min_foot_height;
+  }
+  double dt_;
+  const StateInterface &quad_state_;  // Automatically updates as its a reference
+  const ModelInterface &quad_model_;
+  bool fix_standing_position_;
+  bool sequence_initialized_;
+  double distance_threshold_;
+  double angular_threshold_;
+  double velocity_threshold_;
+  std::array<double, N_LEGS> foot_heights_;
+};
