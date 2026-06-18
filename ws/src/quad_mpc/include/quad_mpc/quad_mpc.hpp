@@ -6,7 +6,6 @@
 
 #include "common/model_interface.hpp"
 #include "common/state_interface.hpp"
-#include "common/constants.hpp"
 #include "quad_mpc/quad_mpc_interface.hpp"
 
 namespace quad_mpc {

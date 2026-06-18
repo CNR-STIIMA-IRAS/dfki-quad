@@ -1,8 +1,12 @@
-#pragma once
+#ifndef QUAD_MPC_PREDICTION_HPP
+#define QUAD_MPC_PREDICTION_HPP
+
 #include <array>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+
+namespace quad_mpc {
 
 struct MPCPredictionInterface {
   virtual ~MPCPredictionInterface() = default;
@@ -18,3 +22,7 @@ struct MPCPrediction : public MPCPredictionInterface {
   std::array<Eigen::Vector3d, PREDICTION_HORIZON + 1> linear_velocity;
   std::array<Eigen::Matrix<double, STATE_SIZE, 1, Eigen::ColMajor>, PREDICTION_HORIZON + 1> raw_data;
 };
+
+}  // namespace quad_mpc
+
+#endif

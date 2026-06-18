@@ -49,6 +49,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(common REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(quad_mpc REQUIRED)
 find_package(OpenMP) # for speeding up eigens matrix multiplications
 if (NOT WITHOUT_DRAKE)
     set(DRAKE_INSTALL_PREFIX "" CACHE PATH "Drake install prefix")
@@ -72,6 +73,7 @@ find_package(fmt REQUIRED)
 find_package(qpOASES REQUIRED)
 find_package(gait_controller REQUIRED)
 find_package(PkgConfig REQUIRED)
+find_package(pluginlib REQUIRED)
 
 function(target_ros_dependencies target)
     foreach(dependency IN LISTS ARGN)
@@ -143,7 +145,6 @@ endif ()
 # ##############################################################################
 add_executable(mitcontrollernode
         src/mit_controller_node.cpp
-        src/mit_controller/mpc.cpp
         src/mit_controller/mpc_trajectory_planner.cpp
         src/mit_controller/swing_leg_controller.cpp
         src/mit_controller/inverse_dynamics.cpp
@@ -186,6 +187,8 @@ target_link_libraries(mitcontrollernode
         PkgConfig::wbc-controllers
         PkgConfig::wbc-types
         gait_controller::gait_controller
+        quad_mpc::quad_mpc
+        pluginlib::pluginlib
 )
 
 target_compile_options(mitcontrollernode PRIVATE -Wall -Wextra -Wpedantic -Werror)

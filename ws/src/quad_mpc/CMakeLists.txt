@@ -67,6 +67,8 @@ ament_export_targets(
   export_${PROJECT_NAME}
 )
 
+ament_export_dependencies(pluginlib)
+
 pluginlib_export_plugin_description_file(quad_mpc quad_mpc_plugins.xml)
 
 ament_package()

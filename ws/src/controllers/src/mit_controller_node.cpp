@@ -1,3 +1,4 @@
+#include <quad_mpc/quad_mpc_prediction.hpp>
 #include <string>
 #include <vector>
 #include <rclcpp/node.hpp>
@@ -29,7 +30,7 @@
 #include "mit_controller/inverse_dynamics.hpp"
 #include "mit_controller/mit_controller_params.hpp"
 
-#include "mit_controller/mpc_interface.hpp"
+#include "quad_mpc/quad_mpc_interface.hpp"
 #include "gait_controller/simple_gait_sequencer.hpp"
 
 #include "mit_controller/swing_leg_controller_interface.hpp"
@@ -321,7 +322,7 @@ MITController::MITController(const std::string &nodeName)
         rcl_interfaces::msg::SetParametersResult res;
         for (auto &param : params) {
           if (param.get_name().find("mpc_state_weights") != std::string::npos
-              and param.as_double_array().size() != (MPC::STATE_SIZE - 1)) {
+              and param.as_double_array().size() != (STATE_SIZE - 1)) {
             res.successful = false;
             res.reason = "MPC state weight vector has wrong size";
             return res;
@@ -402,34 +403,34 @@ MITController::MITController(const std::string &nodeName)
         RCLCPP_INFO(this->get_logger(), "Updating mpc state weights stand");
         mpc_lock_.lock();
         state_weights_stand_ =
-            Eigen::Map<const Eigen::Matrix<double, MPC::STATE_SIZE - 1, 1>>(param.value.double_array_value.data());
+            Eigen::Map<const Eigen::Matrix<double, STATE_SIZE - 1, 1>>(param.value.double_array_value.data());
         if (last_gait_sequence_mode_ == GaitSequence::KEEP) {
-          reinterpret_cast<MPC *>(mpc_.get())->SetStateWeights(state_weights_stand_);
+          reinterpret_cast<quad_mpc::MPC<N_LEGS, MPC_PREDICTION_HORIZON, size_t(MPC_DT *1e9), STATE_SIZE> *>(mpc_.get())->SetStateWeights(state_weights_stand_);
         }
         mpc_lock_.unlock();
       } else if (param.name == "mpc_state_weights_move") {
         RCLCPP_INFO(this->get_logger(), "Updating mpc state weights move");
         mpc_lock_.lock();
         state_weights_move_ =
-            Eigen::Map<const Eigen::Matrix<double, MPC::STATE_SIZE - 1, 1>>(param.value.double_array_value.data());
+            Eigen::Map<const Eigen::Matrix<double, STATE_SIZE - 1, 1>>(param.value.double_array_value.data());
         if (last_gait_sequence_mode_ == GaitSequence::MOVE) {
-          reinterpret_cast<MPC *>(mpc_.get())->SetStateWeights(state_weights_move_);
+          reinterpret_cast<quad_mpc::MPC<N_LEGS, MPC_PREDICTION_HORIZON, size_t(MPC_DT *1e9), STATE_SIZE> *>(mpc_.get())->SetStateWeights(state_weights_move_);
         }
         mpc_lock_.unlock();
       } else if (param.name == "mpc_alpha") {
         RCLCPP_INFO(this->get_logger(), "Updating mpc input weights");
         mpc_lock_.lock();
-        reinterpret_cast<MPC *>(mpc_.get())->SetInputWeights(param.value.double_value);
+        reinterpret_cast<quad_mpc::MPC<N_LEGS, MPC_PREDICTION_HORIZON, size_t(MPC_DT *1e9), STATE_SIZE> *>(mpc_.get())->SetInputWeights(param.value.double_value);
         mpc_lock_.unlock();
       } else if (param.name == "mpc_fmax") {
         RCLCPP_INFO(this->get_logger(), "Updating mpc fmax");
         mpc_lock_.lock();
-        reinterpret_cast<MPC *>(mpc_.get())->SetFmax(param.value.double_value);
+        reinterpret_cast<quad_mpc::MPC<N_LEGS, MPC_PREDICTION_HORIZON, size_t(MPC_DT *1e9), STATE_SIZE> *>(mpc_.get())->SetFmax(param.value.double_value);
         mpc_lock_.unlock();
       } else if (param.name == "mpc_mu") {
         RCLCPP_INFO(this->get_logger(), "Updating mpc mu");
         mpc_lock_.lock();
-        reinterpret_cast<MPC *>(mpc_.get())->SetMu(param.value.double_value);
+        reinterpret_cast<quad_mpc::MPC<N_LEGS, MPC_PREDICTION_HORIZON, size_t(MPC_DT *1e9), STATE_SIZE> *>(mpc_.get())->SetMu(param.value.double_value);
         mpc_lock_.unlock();
       } else if (param.name
                  == "cartesian_joint_control_gains.swing_Kp") {  // TODO: syncronisation, maybe use atomic vars?
@@ -541,11 +542,11 @@ MITController::MITController(const std::string &nodeName)
   });
 
   // Control parts
-  assert(this->get_parameter("mpc_state_weights_stand").as_double_array().size() == (MPC::STATE_SIZE - 1));
-  assert(this->get_parameter("mpc_state_weights_move").as_double_array().size() == (MPC::STATE_SIZE - 1));
-  state_weights_stand_ = Eigen::Map<const Eigen::Matrix<double, MPC::STATE_SIZE - 1, 1>>(
+  assert(this->get_parameter("mpc_state_weights_stand").as_double_array().size() == (STATE_SIZE - 1));
+  assert(this->get_parameter("mpc_state_weights_move").as_double_array().size() == (STATE_SIZE - 1));
+  state_weights_stand_ = Eigen::Map<const Eigen::Matrix<double, STATE_SIZE - 1, 1>>(
       this->get_parameter("mpc_state_weights_stand").as_double_array().data());
-  state_weights_move_ = Eigen::Map<const Eigen::Matrix<double, MPC::STATE_SIZE - 1, 1>>(
+  state_weights_move_ = Eigen::Map<const Eigen::Matrix<double, STATE_SIZE - 1, 1>>(
       this->get_parameter("mpc_state_weights_move").as_double_array().data());
 
   while (!first_quad_state_received_) {
@@ -608,7 +609,7 @@ MITController::MITController(const std::string &nodeName)
     RCLCPP_ERROR(this->get_logger(), "MPC solver %s is not available in this acados build", mpc_solver_name.c_str());
     exit(-1);
   }
-  mpc_ = std::make_unique<MPC>(this->get_parameter("mpc_alpha").as_double(),
+  mpc_ = std::make_unique<quad_mpc::MPC<N_LEGS, MPC_PREDICTION_HORIZON, size_t(MPC_DT *1e9), STATE_SIZE>>(this->get_parameter("mpc_alpha").as_double(),
                                state_weights_stand_,
                                this->get_parameter("mpc_mu").as_double(),
                                this->get_parameter("mpc_fmin").as_double(),
@@ -885,8 +886,8 @@ void MITController::QuadControlTargetUpdateCallback(interfaces::msg::QuadControl
 void MITController::MPCLoopCallback() {
   // Get gait sequence and update other parts
   static GaitSequence gait_sequence_temp;
-  static WrenchSequence ws_temp;
-  static MPCPrediction mpc_prediction_temp;
+  static quad_mpc::WrenchSequence<N_LEGS, MPC_PREDICTION_HORIZON> ws_temp;
+  static quad_mpc::MPCPrediction<MPC_PREDICTION_HORIZON, STATE_SIZE> mpc_prediction_temp;
 
   mpc_lock_.lock();
   gait_sequencer_lock_.lock();
@@ -905,14 +906,14 @@ void MITController::MPCLoopCallback() {
     RCLCPP_DEBUG(this->get_logger(), "Changing MPC weights because sequence mode changed");
     switch (gait_sequence_temp.sequence_mode) {
       case GaitSequence::KEEP:
-        reinterpret_cast<MPC *>(mpc_.get())->SetStateWeights(state_weights_stand_);
+        reinterpret_cast<quad_mpc::MPC<N_LEGS, MPC_PREDICTION_HORIZON, size_t(MPC_DT *1e9), STATE_SIZE> *>(mpc_.get())->SetStateWeights(state_weights_stand_);
         if (PUBLISH_HEARTBEAT) {
           controller_heartbeat_.keep_pose_active = true;
         }
         break;  // TODO: this and next might have internal doubled
                 // operations with target set
       case GaitSequence::MOVE:
-        reinterpret_cast<MPC *>(mpc_.get())->SetStateWeights(state_weights_move_);
+        reinterpret_cast<quad_mpc::MPC<N_LEGS, MPC_PREDICTION_HORIZON, size_t(MPC_DT *1e9), STATE_SIZE> *>(mpc_.get())->SetStateWeights(state_weights_move_);
         if (PUBLISH_HEARTBEAT) {
           controller_heartbeat_.keep_pose_active = false;
         }
@@ -921,11 +922,11 @@ void MITController::MPCLoopCallback() {
     last_gait_sequence_mode_ = gait_sequence_temp.sequence_mode;
   }
 
-  static SolverInformation solver_info;
+  static quad_mpc::SolverInformation solver_info;
   static double mpc_solve_time = 0.0;
   // Calculate controls
   auto mpc_start_time = std::chrono::high_resolution_clock::now();
-  mpc_->GetWrenchSequence(ws_temp, mpc_prediction_temp, solver_info);  // This one might block
+  mpc_->GetWrenchSequence((quad_mpc::WrenchSequenceInterface*)&ws_temp, (quad_mpc::MPCPredictionInterface*)&mpc_prediction_temp, solver_info);  // This one might block
   auto mpc_end_time = std::chrono::high_resolution_clock::now();
 
   RCLCPP_ERROR_EXPRESSION(
@@ -1123,11 +1124,11 @@ void MITController::ControlLoopCallback() {
   // Quad state does not have to be locked, as it is running in a different
   // callback group This only makes sense to run, if the MPC and so on was
   // running at least once
-  static WrenchSequence wrench_sequence_temp;
+  static quad_mpc::WrenchSequence<N_LEGS, MPC_PREDICTION_HORIZON> wrench_sequence_temp;
   static GaitSequence gait_sequence_temp;
   static FeetTargets feet_targets_temp;
   static QuadState quad_state_temp;
-  static MPCPrediction mpc_prediction_temp;
+  static quad_mpc::MPCPrediction<MPC_PREDICTION_HORIZON, STATE_SIZE> mpc_prediction_temp;
   static std::array<double, ModelInterface::N_LEGS> feet_swing_progress_temp;
   static std::array<SwingLegControllerInterface::LegState, ModelInterface::N_LEGS> feet_swing_states_temp;
 

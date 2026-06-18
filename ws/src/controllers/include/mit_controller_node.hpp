@@ -6,6 +6,7 @@
 
 #include "common/quad_model_pino.hpp"
 #include "common/quad_state.hpp"
+#include "common/constants.hpp"
 
 #include "interfaces/msg/controller_info.hpp"
 #include "interfaces/msg/joint_cmd.hpp"
@@ -25,8 +26,10 @@
 
 #include "mit_controller/joint_commands.hpp"
 #include "mit_controller/wbc_interface.hpp"
-#include "mit_controller/mpc.hpp"
-#include "mit_controller/mpc_interface.hpp"
+#include "quad_mpc/quad_mpc.hpp"
+#include "quad_mpc/wrench_sequence.hpp"
+#include "quad_mpc/quad_mpc_prediction.hpp"
+
 #include "mit_controller/swing_leg_controller_interface.hpp"
 #include "model_adaptation/model_adaptation_interface.hpp"
 #include "mpc_trajectory_planner.hpp"
@@ -62,8 +65,8 @@ class MITController : public rclcpp::Node {
   bool lost_contact_detection_;
   bool late_contact_reschedule_swing_phase_;
   bool use_model_adaptation_;
-  Eigen::Matrix<double, MPC::STATE_SIZE - 1, 1> state_weights_stand_;
-  Eigen::Matrix<double, MPC::STATE_SIZE - 1, 1> state_weights_move_;
+  Eigen::Matrix<double, STATE_SIZE - 1, 1> state_weights_stand_;
+  Eigen::Matrix<double, STATE_SIZE - 1, 1> state_weights_move_;
 
   // ROS related members
   rclcpp::Subscription<interfaces::msg::QuadState>::SharedPtr quad_state_subscription_;
@@ -99,7 +102,7 @@ class MITController : public rclcpp::Node {
   std::shared_ptr<rclcpp::ParameterEventCallbackHandle> parameter_event_callback_handle_;
 
   // Controller related members
-  std::unique_ptr<MPCInterface> mpc_;
+  std::unique_ptr<quad_mpc::MPCInterface> mpc_;
   std::unique_ptr<MPCTrajectoryPlanner> mpc_tp_;
   std::unique_ptr<GaitSequencerInterface> gs_;
   std::unique_ptr<SwingLegControllerInterface> slc_;
@@ -111,8 +114,8 @@ class MITController : public rclcpp::Node {
   Target target_;
   GaitSequence gait_sequence_;
   bool gs_updated_;
-  WrenchSequence wrench_sequence_;
-  MPCPrediction mpc_prediction_;
+  quad_mpc::WrenchSequence<N_LEGS,MPC_PREDICTION_HORIZON> wrench_sequence_;
+  quad_mpc::MPCPrediction<MPC_PREDICTION_HORIZON,STATE_SIZE> mpc_prediction_;
   FeetTargets feet_targets_;
   std::array<double, ModelInterface::N_LEGS> feet_swing_progress_;
   std::array<SwingLegControllerInterface::LegState, ModelInterface::N_LEGS> feet_swing_states_;
