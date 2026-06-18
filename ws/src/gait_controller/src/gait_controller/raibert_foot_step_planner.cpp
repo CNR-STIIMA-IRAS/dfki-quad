@@ -1,13 +1,12 @@
-#include "raibert_foot_step_planner.hpp"
-
 #include <cmath>
 #include <iostream>
 
 #include "common/quaternion_operations.hpp"
 #include "common/model_interface.hpp"
 #include "common/state_interface.hpp"
-#include "gait_sequence.hpp"
-#include "mit_controller_params.hpp"
+#include "gait_controller/gait_sequence.hpp"
+#include "gait_controller/raibert_foot_step_planner.hpp"
+
 
 RaibertFootStepPlanner::RaibertFootStepPlanner(const std::array<const Eigen::Vector3d, N_LEGS> &shoulder_positions,
                                                const StateInterface &quad_state,

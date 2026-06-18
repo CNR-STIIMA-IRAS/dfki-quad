@@ -4,6 +4,7 @@
 #include <fmt/format.h>
 
 #include <common/sequence_containers.hpp>
+#include <common/state_interface.hpp>
 #include <memory>
 #include <wbc/controllers/CartesianPosPDController.hpp>
 #include <wbc/robot_models/pinocchio/RobotModelPinocchio.hpp>
@@ -18,7 +19,7 @@
 #include <wbc/types/RigidBodyState.hpp>
 #include <wbc/types/Wrench.hpp>
 
-#include "mit_controller_params.hpp"
+#include "mit_controller/joint_commands.hpp"
 #include "wbc_interface.hpp"
 
 #define FEET_FORCE_TASK

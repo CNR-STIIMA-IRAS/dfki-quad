@@ -6,6 +6,7 @@
 
 #include "common/quad_model_pino.hpp"
 #include "common/quad_state.hpp"
+
 #include "interfaces/msg/controller_info.hpp"
 #include "interfaces/msg/joint_cmd.hpp"
 #include "interfaces/msg/gait_sequence.hpp"
@@ -20,12 +21,15 @@
 #include "interfaces/msg/wbc_return.hpp"
 #include "interfaces/msg/wbc_target.hpp"
 #include "interfaces/srv/change_leg_driver_mode.hpp"
-#include "mit_controller/gait_sequencer_interface.hpp"
+#include "gait_controller/gait_sequencer_interface.hpp"
+
+#include "mit_controller/joint_commands.hpp"
+#include "mit_controller/wbc_interface.hpp"
 #include "mit_controller/mpc.hpp"
 #include "mit_controller/mpc_interface.hpp"
 #include "mit_controller/swing_leg_controller_interface.hpp"
-#include "mit_controller/wbc_interface.hpp"
 #include "model_adaptation/model_adaptation_interface.hpp"
+#include "mpc_trajectory_planner.hpp"
 
 class MITController : public rclcpp::Node {
  public:
@@ -96,6 +100,7 @@ class MITController : public rclcpp::Node {
 
   // Controller related members
   std::unique_ptr<MPCInterface> mpc_;
+  std::unique_ptr<MPCTrajectoryPlanner> mpc_tp_;
   std::unique_ptr<GaitSequencerInterface> gs_;
   std::unique_ptr<SwingLegControllerInterface> slc_;
   typedef std::conditional<USE_WBC,
@@ -136,6 +141,9 @@ class MITController : public rclcpp::Node {
   bool first_quad_state_received_;
   QuadState quad_state_;
   QuadModelPino quad_model_;
+
+  std::unique_ptr<MPCTrajectoryPlanner> GetMPCTrajectoryPlannerFromParams(const ModelInterface& model,
+                                                                     const StateInterface& state) const;
 
   std::unique_ptr<GaitSequencerInterface> GetGaitSequencerFromParams(std::unique_ptr<ModelInterface> model,
                                                                      std::unique_ptr<StateInterface> state) const;

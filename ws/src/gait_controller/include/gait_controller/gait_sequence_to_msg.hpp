@@ -1,9 +1,9 @@
 #pragma once
 
 #include "interfaces/msg/gait_sequence.hpp"
-#include "mit_controller/gait_sequence.hpp"
-#include "mit_controller/mit_controller_params.hpp"
+#include "gait_controller/gait_sequence.hpp"
 
+inline
 interfaces::msg::GaitSequence gait_sequence_to_msg(const GaitSequence& sequence) {
   static const int size = 11;  // size from message definition
   assert(MPC_PREDICTION_HORIZON + 1 <= size);

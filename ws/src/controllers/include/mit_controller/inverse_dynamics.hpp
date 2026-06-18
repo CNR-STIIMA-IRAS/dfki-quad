@@ -1,9 +1,9 @@
 #pragma once
-#include <iostream>
+
 #include <memory>
 
 #include "common/filters.hpp"
-#include "common/quaternion_operations.hpp"
+#include "mit_controller/joint_commands.hpp"
 #include "wbc_interface.hpp"
 
 class InverseDynamics : public WBCInterface<CartesianCommands> {

@@ -1,10 +1,10 @@
 #pragma once
 
 #include <array>
+#include <Eigen/Dense>
 
 #include "common/state_interface.hpp"
-#include "eigen3/Eigen/Dense"
-#include "mit_controller_params.hpp"
+#include "common/constants.hpp"
 
 struct GaitSequence {
   // Time point of gs creation such that the time dependent value are all valid

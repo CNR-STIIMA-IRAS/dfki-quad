@@ -1,14 +1,11 @@
-#include "gait.hpp"
-
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <iostream>
 #include <string>
 
-#include "gait_sequence.hpp"
-#include "mit_controller/gait.hpp"
-#include "mit_controller_params.hpp"
+#include "gait_controller/gait.hpp"
+#include "gait_controller/gait_sequence.hpp"
 
 // ------------- Gait -------------//
 Gait::Gait(double period,

@@ -2,7 +2,7 @@
 
 #include <common/model_interface.hpp>
 
-#include "gait_sequence.hpp"
+#include "gait_controller/gait_sequence.hpp"
 #include "mpc_prediction.hpp"
 #include "wrench_sequence.hpp"
 

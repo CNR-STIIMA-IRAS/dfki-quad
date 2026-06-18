@@ -1,7 +1,7 @@
 #pragma once
 #include "common/model_interface.hpp"
 #include "common/state_interface.hpp"
-#include "gait_sequence.hpp"
+#include "gait_controller/gait_sequence.hpp"
 
 class ModelAdaptationInterface {
  public:

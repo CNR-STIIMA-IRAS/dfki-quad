@@ -1,14 +1,16 @@
 #pragma once
 
 #include <array>
-#include <common/filters.hpp>
-#include <common/model_interface.hpp>
-#include <common/state_interface.hpp>
+#include <Eigen/Dense>
 
-#include "eigen3/Eigen/Dense"
-#include "gait_interface.hpp"
-#include "gait_sequence.hpp"
-#include "mit_controller_params.hpp"
+
+#include "common/filters.hpp"
+#include "common/model_interface.hpp"
+#include "common/state_interface.hpp"
+
+#include "gait_controller/gait_interface.hpp"
+#include "gait_controller/gait_sequence.hpp"
+
 
 class RaibertFootStepPlanner {
  public:

@@ -1,15 +1,13 @@
-#include "simple_gait_sequencer.hpp"
-
 #include <math.h>
 
 #include <algorithm>
 #include <array>
+#include <memory>
 
-#include "gait_sequence.hpp"
-#include "mit_controller_params.hpp"
-#include "mpc_trajectory_planner.hpp"
-#include "raibert_foot_step_planner.hpp"
-#include "target.hpp"
+#include "gait_controller/gait.hpp"
+#include "gait_controller/simple_gait_sequencer.hpp"
+#include "gait_controller/gait_sequence.hpp"
+#include "gait_controller/raibert_foot_step_planner.hpp"
 
 SimpleGaitSequencer::SimpleGaitSequencer(const Gait& gait,
                                          double k,
@@ -18,31 +16,26 @@ SimpleGaitSequencer::SimpleGaitSequencer(const Gait& gait,
                                          std::unique_ptr<ModelInterface> quad_model,
                                          unsigned int raibert_filtersize,
                                          bool raibert_z_on_plane,
-                                         bool fix_standing_position,
-                                         double fix_position_distance_threshold,
-                                         double fix_position_angular_threshold,
-                                         double fix_position_velocity_threshold,
+
                                          bool early_contact_detection)
-    : target_({}),
-      quad_state_(std::move(quad_state)),
-      quad_model_(std::move(quad_model)),
-      gait_(gait),
-      foot_step_planner_(shoulder_positions, *quad_state_, *quad_model_, raibert_filtersize, raibert_z_on_plane, k),
-      trajectory_planner_(gait.get_dt(),
-                          *quad_state_,
-                          *quad_model_,
-                          fix_standing_position,
-                          fix_position_distance_threshold,
-                          fix_position_angular_threshold,
-                          fix_position_velocity_threshold),
+  : GaitSequencerInterface(k, shoulder_positions, std::move(quad_state), std::move(quad_model), raibert_filtersize, raibert_z_on_plane),
+    gait_(gait),
+      // trajectory_planner_(gait.get_dt(),
+      //                     *quad_state_,
+      //                     *quad_model_,
+      //                     fix_standing_position,
+      //                     fix_position_distance_threshold,
+      //                     fix_position_angular_threshold,
+      //                     fix_position_velocity_threshold),
       phase_(0.0),
       time_(quad_state_->GetTime()),
       time_initialized_(false),
       early_contact_detection_(early_contact_detection){};
 
+// trajectory_planner_.plan_trajectory(gait_sequence, target_);
 void SimpleGaitSequencer::GetGaitSequence(GaitSequence& gait_sequence) {
   // update MPC trajectory
-  trajectory_planner_.plan_trajectory(gait_sequence, target_);
+  // trajectory_planner_.plan_trajectory(gait_sequence, target_);
   // update contact and swing timings
   if (early_contact_detection_) {
     gait_.update_sequence(gait_sequence, phase_, quad_state_->GetFeetContacts());

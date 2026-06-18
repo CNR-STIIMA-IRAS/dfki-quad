@@ -23,23 +23,22 @@
 #include "interfaces/msg/wbc_return.hpp"
 #include "interfaces/msg/wbc_target.hpp"
 #include "interfaces/srv/change_leg_driver_mode.hpp"
-#include "mit_controller/adaptive_gait_sequencer.hpp"
-#include "mit_controller/gait_sequence_to_msg.hpp"
-#include "mit_controller/gait_sequencer_interface.hpp"
+#include "gait_controller/adaptive_gait_sequencer.hpp"
+#include "gait_controller/gait_sequence_to_msg.hpp"
+
 #include "mit_controller/inverse_dynamics.hpp"
 #include "mit_controller/mit_controller_params.hpp"
-#include "mit_controller/mpc.hpp"
+
 #include "mit_controller/mpc_interface.hpp"
-#include "mit_controller/simple_gait_sequencer.hpp"
-#include "mit_controller/swing_leg_controller.hpp"
+#include "gait_controller/simple_gait_sequencer.hpp"
+
 #include "mit_controller/swing_leg_controller_interface.hpp"
+#include "mit_controller/swing_leg_controller.hpp"
 #include "mit_controller/wbc_arc_opt.hpp"
-#include "mit_controller/wbc_interface.hpp"
-#include "model_adaptation/kf_model_adaptation.hpp"
-#include "model_adaptation/least_squares_model_adaptation.hpp"
-#include "model_adaptation/model_adaptation_interface.hpp"
 
 #include "mit_controller_node.hpp"
+#include "model_adaptation/least_squares_model_adaptation.hpp"
+#include "model_adaptation/kf_model_adaptation.hpp"
 
 MITController::MITController(const std::string &nodeName)
     : Node(nodeName),
@@ -534,6 +533,10 @@ MITController::MITController(const std::string &nodeName)
         gs_ = std::move(gs);
         gait_sequencer_lock_.unlock();
       }
+      auto mpc_tp =  GetMPCTrajectoryPlannerFromParams(gs_->GetModel(), gs_->GetState());
+      if (mpc_tp) {
+        mpc_tp_ = std::move(mpc_tp);
+      }
     }
   });
 
@@ -560,7 +563,12 @@ MITController::MITController(const std::string &nodeName)
     RCLCPP_ERROR(this->get_logger(), "Could not load gait sequencer from params");
     rclcpp::shutdown();
   }
-
+  mpc_tp_ =  GetMPCTrajectoryPlannerFromParams(gs_->GetModel(), gs_->GetState());
+  if (!mpc_tp_) {
+    RCLCPP_ERROR(this->get_logger(), "Could not load MPC Trajectory Planner from params");
+    rclcpp::shutdown();
+  }
+  
   auto mpc_solver_name = this->get_parameter("mpc_solver").as_string();
   ocp_qp_solver_t mpc_solver = PARTIAL_CONDENSING_HPIPM;
   bool solver_available = true;
@@ -734,6 +742,7 @@ void MITController::QuadStateUpdateCallback(interfaces::msg::QuadState::SharedPt
   quad_state_ = *quad_state_msg;
   quad_state_lock_.unlock();
 }
+
 std::unique_ptr<GaitSequencerInterface> MITController::GetGaitSequencerFromParams(
     std::unique_ptr<ModelInterface> model, std::unique_ptr<StateInterface> state) const {
   assert(this->get_parameter("gs_shoulder_positions").as_double_array().size() == (N_LEGS * 3));
@@ -795,10 +804,6 @@ std::unique_ptr<GaitSequencerInterface> MITController::GetGaitSequencerFromParam
         std::move(model),
         this->get_parameter("raibert.filtersize").as_int(),
         this->get_parameter("raibert.z_on_plane").as_bool(),
-        this->get_parameter("fix_standing_position").as_bool(),
-        this->get_parameter("fix_position_distance_threshold").as_double(),
-        this->get_parameter("fix_position_angular_threshold").as_double(),
-        this->get_parameter("fix_position_velocity_threshold").as_double(),
         early_contact_detection_);
 
   } else if (gait_sequencer == "Adaptive") {
@@ -839,10 +844,10 @@ std::unique_ptr<GaitSequencerInterface> MITController::GetGaitSequencerFromParam
         std::move(model),
         this->get_parameter("raibert.filtersize").as_int(),
         this->get_parameter("raibert.z_on_plane").as_bool(),
-        this->get_parameter("fix_standing_position").as_bool(),
-        this->get_parameter("fix_position_distance_threshold").as_double(),
-        this->get_parameter("fix_position_angular_threshold").as_double(),
-        this->get_parameter("fix_position_velocity_threshold").as_double(),
+        // this->get_parameter("fix_standing_position").as_bool(),
+        // this->get_parameter("fix_position_distance_threshold").as_double(),
+        // this->get_parameter("fix_position_angular_threshold").as_double(),
+        // this->get_parameter("fix_position_velocity_threshold").as_double(),
         early_contact_detection_);
 
   } else {
@@ -850,6 +855,22 @@ std::unique_ptr<GaitSequencerInterface> MITController::GetGaitSequencerFromParam
     return nullptr;
   }
 }
+
+
+std::unique_ptr<MPCTrajectoryPlanner> MITController::GetMPCTrajectoryPlannerFromParams(
+    const ModelInterface& model, const StateInterface& state) const {
+
+  return std::make_unique<MPCTrajectoryPlanner>(
+      MPCTrajectoryPlanner( MPC_DT,
+                            state,
+                            model,
+                            this->get_parameter("fix_standing_position").as_bool(),
+                            this->get_parameter("fix_position_distance_threshold").as_double(),
+                            this->get_parameter("fix_position_angular_threshold").as_double(),
+                            this->get_parameter("fix_position_velocity_threshold").as_double()
+      ));
+}
+
 
 void MITController::QuadControlTargetUpdateCallback(interfaces::msg::QuadControlTarget::SharedPtr quad_target_msg) {
   target_.hybrid_x_dot = quad_target_msg->body_x_dot;
@@ -876,6 +897,7 @@ void MITController::MPCLoopCallback() {
   gs_->UpdateState(quad_state_temp);
   mpc_->UpdateState(quad_state_temp);
   slc_->UpdateState(quad_state_temp);
+  mpc_tp_->plan_trajectory(gait_sequence_temp, gs_->GetTarget());
   gs_->GetGaitSequence(gait_sequence_temp);
   mpc_->UpdateGaitSequence(gait_sequence_temp);
 

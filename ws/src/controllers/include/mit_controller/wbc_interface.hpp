@@ -2,10 +2,6 @@
 
 #include "common/model_interface.hpp"
 #include "feet_targets.hpp"
-#include "gait_sequence.hpp"
-#include "joint_commands.hpp"
-#include "mpc_prediction.hpp"
-#include "wrench_sequence.hpp"
 
 struct WBCReturn {
   bool success;

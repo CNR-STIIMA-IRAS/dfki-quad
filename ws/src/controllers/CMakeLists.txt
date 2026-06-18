@@ -70,6 +70,7 @@ find_package(Matplot++ REQUIRED)
 find_package(unitree_go REQUIRED)
 find_package(fmt REQUIRED)
 find_package(qpOASES REQUIRED)
+find_package(gait_controller REQUIRED)
 find_package(PkgConfig REQUIRED)
 
 function(target_ros_dependencies target)
@@ -98,6 +99,8 @@ function(target_ros_dependencies target)
             target_link_libraries(${target} drake::drake)
         elseif(dependency STREQUAL "simulator")
             target_link_libraries(${target} simulator::drake_visualizers)
+        elseif(dependency STREQUAL "gait_controller")
+            target_link_libraries(${target} gait_controller::gait_controller)
         else()
             message(FATAL_ERROR "Unsupported dependency ${dependency}")
         endif()
@@ -141,12 +144,7 @@ endif ()
 add_executable(mitcontrollernode
         src/mit_controller_node.cpp
         src/mit_controller/mpc.cpp
-        src/mit_controller/gait.cpp
-        src/mit_controller/simple_gait_sequencer.cpp
-        src/mit_controller/adaptive_gait_sequencer.cpp
-        src/mit_controller/bio_gait_sequencer.cpp
         src/mit_controller/mpc_trajectory_planner.cpp
-        src/mit_controller/raibert_foot_step_planner.cpp
         src/mit_controller/swing_leg_controller.cpp
         src/mit_controller/inverse_dynamics.cpp
         src/mit_controller/wbc_arc_opt.cpp
@@ -187,6 +185,7 @@ target_link_libraries(mitcontrollernode
         PkgConfig::wbc-scenes-acceleration_tsid
         PkgConfig::wbc-controllers
         PkgConfig::wbc-types
+        gait_controller::gait_controller
 )
 
 target_compile_options(mitcontrollernode PRIVATE -Wall -Wextra -Wpedantic -Werror)

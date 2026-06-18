@@ -1,15 +1,13 @@
-#include "bio_gait_sequencer.hpp"
 
 #include <math.h>
 
 #include <algorithm>
 #include <array>
+#include <utility>
 
-#include "gait_sequence.hpp"
-#include "mit_controller_params.hpp"
-#include "mpc_trajectory_planner.hpp"
-#include "raibert_foot_step_planner.hpp"
-#include "target.hpp"
+
+#include "gait_controller/bio_gait_sequencer.hpp"
+#include "gait_controller/gait_sequence.hpp"
 
 BioGaitSequencer::BioGaitSequencer(double k,
                                    const std::array<const Eigen::Vector3d, N_LEGS>& shoulder_positions,
@@ -17,25 +15,18 @@ BioGaitSequencer::BioGaitSequencer(double k,
                                    std::unique_ptr<ModelInterface> quad_model,
                                    unsigned int raibert_filtersize,
                                    bool raibert_z_on_plane,
-                                   bool fix_standing_position,
-                                   double fix_position_distance_threshold,
-                                   double fix_position_angular_threshold,
-                                   double fix_position_velocity_threshold,
                                    bool early_contact_detection)
-    : target_({}),
-      quad_state_(std::move(quad_state)),
-      quad_model_(std::move(quad_model)),
+    : GaitSequencerInterface(k, shoulder_positions, std::move(quad_state), std::move(quad_model), raibert_filtersize, raibert_z_on_plane),
       database_(BioGaitDatabase()),
       gait_(database_.getGait(BioGaitDatabase::STAND, MPC_DT)),
       new_gait_(database_.getGait(BioGaitDatabase::STATIC_WALK, MPC_DT)),
-      foot_step_planner_(shoulder_positions, *quad_state_, *quad_model_, raibert_filtersize, raibert_z_on_plane, k),
-      trajectory_planner_(MPC_DT,
-                          *quad_state_,
-                          *quad_model_,
-                          fix_standing_position,
-                          fix_position_distance_threshold,
-                          fix_position_angular_threshold,
-                          fix_position_velocity_threshold),
+      // trajectory_planner_(MPC_DT,
+      //                     *quad_state_,
+      //                     *quad_model_,
+      //                     fix_standing_position,
+      //                     fix_position_distance_threshold,
+      //                     fix_position_angular_threshold,
+      //                     fix_position_velocity_threshold),
       phase_(0.0),
       time_{quad_state_->GetTime()},
       time_initialized_(false),
@@ -47,7 +38,7 @@ BioGaitSequencer::BioGaitSequencer(double k,
 
 void BioGaitSequencer::GetGaitSequence(GaitSequence& gait_sequence) {
   // update MPC trajectory
-  trajectory_planner_.plan_trajectory(gait_sequence, target_);
+  // trajectory_planner_.plan_trajectory(gait_sequence, target_);
   // check for transition
   if (!transition_) {
     // use planned velocity for froude number

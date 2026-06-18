@@ -1,3 +1,6 @@
+#include <memory>
+
+#include "common/quaternion_operations.hpp"
 #include "mit_controller/inverse_dynamics.hpp"
 
 InverseDynamics::InverseDynamics(std::unique_ptr<ModelInterface> model,
