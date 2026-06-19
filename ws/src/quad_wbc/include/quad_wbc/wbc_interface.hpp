@@ -14,8 +14,10 @@ template <class JointCommandType>
 class WBCInterface {
  protected:
   WBCInterface() = default;  // protected, as there cant be any Object from an Interface
-  virtual ~WBCInterface() = default;
+
  public:
+  virtual ~WBCInterface() = default;
+
   typedef JointCommandType JOINT_COMMAND_TYPE;
   typedef std::array<Eigen::Vector3d, ModelInterface::N_LEGS> Wrenches;
   typedef std::array<bool, ModelInterface::N_LEGS> FootContact;

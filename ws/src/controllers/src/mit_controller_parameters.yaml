@@ -1,0 +1,383 @@
+mit_controller:
+  initial_height:
+    type: double
+    description: "Initial body height target."
+  slc_swing_height:
+    type: double
+    description: "Swing leg clearance height."
+  slc_world_blend:
+    type: double
+    default_value: 1.0
+    description: "Blend factor for world-frame swing leg targets."
+  leg_control_mode:
+    type: int
+    description: "Leg command mode: 0 joint, 1 joint torque, 2 Cartesian stiffness, 3 Cartesian joint."
+  controller_heartbeat_dt:
+    type: double
+    default_value: 0.5
+    description: "Heartbeat publish period."
+  joint_control_gains:
+    swing_Kp:
+      type: double_array
+      description: "Joint-control swing proportional gains."
+      validation:
+        fixed_size<>: [3]
+    swing_Kd:
+      type: double_array
+      description: "Joint-control swing derivative gains."
+      validation:
+        fixed_size<>: [3]
+    stance_Kp:
+      type: double_array
+      description: "Joint-control stance proportional gains."
+      validation:
+        fixed_size<>: [3]
+    stance_Kd:
+      type: double_array
+      description: "Joint-control stance derivative gains."
+      validation:
+        fixed_size<>: [3]
+  cartesian_joint_control_gains:
+    swing_Kp:
+      type: double_array
+      description: "Cartesian-joint swing proportional gains."
+      validation:
+        fixed_size<>: [3]
+    swing_Kd:
+      type: double_array
+      description: "Cartesian-joint swing derivative gains."
+      validation:
+        fixed_size<>: [3]
+    stance_Kp:
+      type: double_array
+      description: "Cartesian-joint stance proportional gains."
+      validation:
+        fixed_size<>: [3]
+    stance_Kd:
+      type: double_array
+      description: "Cartesian-joint stance derivative gains."
+      validation:
+        fixed_size<>: [3]
+  cartesian_stiffness_control_gains:
+    swing_Kp:
+      type: double_array
+      description: "Cartesian-stiffness swing proportional gains."
+      validation:
+        fixed_size<>: [3]
+    swing_Kd:
+      type: double_array
+      description: "Cartesian-stiffness swing derivative gains."
+      validation:
+        fixed_size<>: [3]
+    stance_Kp:
+      type: double_array
+      description: "Cartesian-stiffness stance proportional gains."
+      validation:
+        fixed_size<>: [3]
+    stance_Kd:
+      type: double_array
+      description: "Cartesian-stiffness stance derivative gains."
+      validation:
+        fixed_size<>: [3]
+  mpc_alpha:
+    type: double
+    description: "MPC input weight."
+  mpc_state_weights_stand:
+    type: double_array
+    description: "MPC state weights for keep/stand mode."
+    validation:
+      fixed_size<>: [12]
+  mpc_state_weights_move:
+    type: double_array
+    description: "MPC state weights for move mode."
+    validation:
+      fixed_size<>: [12]
+  mpc_mu:
+    type: double
+    description: "MPC friction coefficient."
+  mpc_fmin:
+    type: double
+    description: "MPC minimum normal force."
+  mpc_fmax:
+    type: double
+    description: "MPC maximum normal force."
+  mpc_solver:
+    type: string
+    default_value: "PARTIAL_CONDENSING_HPIPM"
+    description: "acados QP solver name."
+  mpc_condensed_size:
+    type: int
+    default_value: 10
+    description: "MPC condensed horizon size."
+  mpc_hpipm_mode:
+    type: string
+    default_value: "SPEED"
+    description: "HPIPM mode passed to acados."
+  mpc_warm_start:
+    type: int
+    default_value: 1
+    description: "MPC warm-start mode."
+  mpc_solver_tolerances:
+    type: double
+    default_value: -1.0
+    description: "MPC solver tolerance override."
+  mpc_osqp_linsys_solver:
+    type: string
+    default_value: "qdldl"
+    description: "OSQP linear system solver."
+  gs_shoulder_positions:
+    type: double_array
+    description: "Nominal shoulder positions for all legs."
+    validation:
+      fixed_size<>: [12]
+  raibert:
+    k:
+      type: double
+      default_value: 0.03
+      description: "Raibert foot-placement gain."
+    z_on_plane:
+      type: bool
+      default_value: false
+      description: "Project Raibert targets onto the ground plane."
+    filtersize:
+      type: int
+      default_value: 20
+      description: "Raibert target filter size."
+  fix_standing_position:
+    type: bool
+    description: "Hold the standing reference until motion thresholds are exceeded."
+  fix_position_distance_threshold:
+    type: double
+    default_value: 0.1
+    description: "Distance threshold for leaving fixed standing position."
+  fix_position_angular_threshold:
+    type: double
+    default_value: 0.26
+    description: "Angular threshold for leaving fixed standing position."
+  fix_position_velocity_threshold:
+    type: double
+    default_value: 0.1
+    description: "Velocity threshold for leaving fixed standing position."
+  maximum_swing_leg_progress_to_update_target:
+    type: double
+    description: "Latest swing progress at which the foot target may be updated."
+  early_contact_detection:
+    type: bool
+    description: "Enable early contact handling."
+  late_contact_detection:
+    type: bool
+    description: "Enable late contact handling."
+  lost_contact_detection:
+    type: bool
+    description: "Enable lost contact handling."
+  late_contact_reschedule_swing_phase:
+    type: bool
+    description: "Reschedule swing phase on late contact."
+  use_model_adaptation:
+    type: bool
+    default_value: false
+    description: "Enable model adaptation updates."
+  ma_forgetting_factor:
+    type: double
+    default_value: 0.5
+    description: "Recursive least-squares forgetting factor."
+  ma_convergence_threshold:
+    type: double_array
+    default_value: [0.695, 0.12, 0.11]
+    description: "Model-adaptation convergence thresholds."
+  ma_process_noise:
+    type: double_array
+    default_value: [0.005, 0.0005, 0.0005]
+    description: "Model-adaptation process noise diagonal."
+  ma_measurement_noise:
+    type: double_array
+    default_value: [1000.0, 1000.0, 10000.0, 10000.0, 10000.0, 1000.0]
+    description: "Model-adaptation measurement noise diagonal."
+  ma_mode:
+    type: int
+    default_value: 0
+    description: "Model-adaptation backend: 0 Kalman filter, 1 RLS."
+  gait_sequencer:
+    type: string
+    default_value: "Simple"
+    description: "Gait sequencer implementation."
+  simple_gait_sequencer:
+    gait:
+      type: string
+      default_value: "STAND"
+      description: "Simple gait name or Manual."
+    manual_gait:
+      period:
+        type: double
+        default_value: 0.5
+        description: "Manual gait period."
+      duty_factor:
+        type: double_array
+        default_value: [0.6, 0.6, 0.6, 0.6]
+        description: "Manual gait duty factors."
+        validation:
+          fixed_size<>: [4]
+      phase_offset:
+        type: double_array
+        default_value: [0.0, 0.5, 0.5, 0.0]
+        description: "Manual gait phase offsets."
+        validation:
+          fixed_size<>: [4]
+  adaptive_gait_sequencer:
+    gait:
+      swing_time:
+        type: double
+        default_value: 0.2
+        description: "Adaptive gait swing time."
+      min_v_cmd_factor:
+        type: double
+        default_value: 0.5
+        description: "Minimum commanded velocity factor for adaptive gait."
+      filter_size:
+        type: int
+        default_value: 10
+        description: "Adaptive gait filter size."
+      zero_velocity_threshold:
+        type: double
+        default_value: 0.03
+        description: "Adaptive gait zero-velocity threshold."
+      standing_foot_position_threshold:
+        type: double
+        default_value: 0.08
+        description: "Adaptive gait standing foot-position threshold."
+      max_correction_cycles:
+        type: double
+        default_value: 2.0
+        description: "Maximum number of adaptive gait correction cycles."
+      correct_all:
+        type: bool
+        default_value: false
+        description: "Apply adaptive gait corrections to all feet."
+      correction_period:
+        type: double
+        default_value: 0.6
+        description: "Adaptive gait correction period."
+      disturbance_correction:
+        type: double
+        default_value: 0.0
+        description: "Adaptive gait disturbance correction."
+      min_v:
+        type: double
+        default_value: 0.0
+        description: "Adaptive gait minimum velocity."
+      offset_delay:
+        type: double
+        default_value: 0.0
+        description: "Adaptive gait offset delay."
+      max_stride_length:
+        type: double
+        default_value: 0.0
+        description: "Adaptive gait maximum stride length."
+      switch_offsets:
+        type: bool
+        default_value: true
+        description: "Enable adaptive offset switching."
+      phase_offset:
+        type: double_array
+        default_value: [0.0, 0.5, 0.5, 0.0]
+        description: "Adaptive gait phase offsets."
+        validation:
+          fixed_size<>: [4]
+      gait_change_froude:
+        type: double_array
+        default_value: [0.02, 0.006]
+        description: "Froude thresholds for adaptive gait changes."
+        validation:
+          fixed_size<>: [2]
+  wbc:
+    inverse_dynamics:
+      transformation_filter_size:
+        type: int
+        default_value: 20
+        description: "Inverse-dynamics transform filter size."
+      foot_position_based_on_target_height:
+        type: bool
+        description: "Use target height when building inverse-dynamics foot positions."
+      foot_position_based_on_target_orientation:
+        type: bool
+        description: "Use target orientation when building inverse-dynamics foot positions."
+      target_velocity_blend:
+        type: double
+        default_value: 0.0
+        description: "Blend factor for target velocity in inverse dynamics."
+    arc_opt:
+      model_urdf:
+        type: string
+        description: "URDF path for ARC-OPT WBC."
+      feet_names:
+        type: string_array
+        description: "Foot frame names for ARC-OPT WBC."
+        validation:
+          fixed_size<>: [4]
+      joint_names:
+        type: string_array
+        description: "Joint names for ARC-OPT WBC."
+        validation:
+          fixed_size<>: [12]
+      mu:
+        type: double
+        description: "ARC-OPT friction coefficient."
+      com_pose_weight:
+        type: double_array
+        description: "ARC-OPT COM pose task weights."
+        validation:
+          fixed_size<>: [6]
+      com_pose_Kp:
+        type: double_array
+        description: "ARC-OPT COM pose proportional gains."
+        validation:
+          fixed_size<>: [6]
+      com_pose_Kd:
+        type: double_array
+        description: "ARC-OPT COM pose derivative gains."
+        validation:
+          fixed_size<>: [6]
+      foot_pose_weight:
+        type: double_array
+        description: "ARC-OPT foot pose task weights."
+        validation:
+          fixed_size<>: [3]
+      foot_force_weight:
+        type: double_array
+        description: "ARC-OPT foot force task weights."
+        validation:
+          fixed_size<>: [3]
+      feet_pose_Kp:
+        type: double_array
+        description: "ARC-OPT foot pose proportional gains."
+        validation:
+          fixed_size<>: [3]
+      feet_pose_Kd:
+        type: double_array
+        description: "ARC-OPT foot pose derivative gains."
+        validation:
+          fixed_size<>: [3]
+      com_pose_saturation:
+        type: double_array
+        default_value: [1.7976931348623157e+308, 1.7976931348623157e+308, 1.7976931348623157e+308, 1.7976931348623157e+308, 1.7976931348623157e+308, 1.7976931348623157e+308]
+        description: "ARC-OPT COM pose command saturation."
+        validation:
+          fixed_size<>: [6]
+      feet_pose_saturation:
+        type: double_array
+        default_value: [1.7976931348623157e+308, 1.7976931348623157e+308, 1.7976931348623157e+308]
+        description: "ARC-OPT foot pose command saturation."
+        validation:
+          fixed_size<>: [3]
+      solver:
+        type: string
+        default_value: "QPOasesSolver"
+        description: "ARC-OPT solver plugin name."
+      scene:
+        type: string
+        default_value: "AccelerationSceneReducedTSID"
+        description: "ARC-OPT scene plugin name."
+  wbc_solver_tolerances:
+    type: double
+    default_value: -1.0
+    description: "WBC solver tolerance override."

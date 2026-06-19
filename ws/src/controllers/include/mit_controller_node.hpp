@@ -34,6 +34,7 @@
 
 #include "quad_swing_controller/swing_leg_controller_interface.hpp"
 #include "quad_model_adaptation/model_adaptation_interface.hpp"
+#include "controllers/mit_controller_parameters.hpp"
 
 
 #include "common/constants.hpp"
@@ -60,6 +61,9 @@ class MITController : public rclcpp::Node {
   };
 
  private:
+  using ParamListener = mit_controller::ParamListener;
+  using Params = mit_controller::Params;
+
   enum LegStatus { SWING, STANCE, EARLY_CONTACT, LATE_CONTACT, LOST_CONTACT };
 
   // Parameters:
@@ -83,6 +87,8 @@ class MITController : public rclcpp::Node {
   bool use_model_adaptation_;
   Eigen::Matrix<double, STATE_SIZE - 1, 1> state_weights_stand_;
   Eigen::Matrix<double, STATE_SIZE - 1, 1> state_weights_move_;
+  std::shared_ptr<ParamListener> param_listener_;
+  Params params_;
 
   // ROS related members
   rclcpp::Subscription<interfaces::msg::QuadState>::SharedPtr quad_state_subscription_;

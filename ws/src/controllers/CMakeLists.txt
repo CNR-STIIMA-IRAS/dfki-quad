@@ -53,6 +53,7 @@ find_package(quad_mpc REQUIRED)
 find_package(quad_wbc REQUIRED)
 find_package(quad_model_adaptation REQUIRED)
 find_package(quad_swing_controller REQUIRED)
+find_package(generate_parameter_library REQUIRED)
 
 find_package(OpenMP) # for speeding up eigens matrix multiplications
 if(NOT WITHOUT_DRAKE)
@@ -129,6 +130,11 @@ endif()
 # ##############################################################################
 # --- MIT CONTROLLER NODE --- #
 # ##############################################################################
+generate_parameter_library(
+    mit_controller_parameters
+    src/mit_controller_parameters.yaml
+)
+
 add_executable(mitcontrollernode
     src/mit_controller_node.cpp
 )
@@ -143,6 +149,7 @@ endif()
 
 target_link_libraries(mitcontrollernode
     gait_controller::gait_controller
+    mit_controller_parameters
     quad_mpc::quad_mpc
     pluginlib::pluginlib
     quad_wbc::quad_wbc

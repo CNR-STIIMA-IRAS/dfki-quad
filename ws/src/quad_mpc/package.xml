@@ -12,8 +12,7 @@
   <depend>common</depend>
   <depend>rclcpp</depend>
   <depend>pluginlib</depend>
-  <depend>eigen3</depend>
-  <depend>acados</depend>
+  <depend>eigen</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
