@@ -73,7 +73,6 @@ if(NOT WITHOUT_DRAKE)
 endif()
 find_package(acados REQUIRED)
 find_package(Matplot++ REQUIRED)
-find_package(unitree_go REQUIRED)
 find_package(gait_controller REQUIRED)
 find_package(pluginlib REQUIRED)
 

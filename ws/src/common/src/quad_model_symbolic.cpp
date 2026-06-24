@@ -10,8 +10,8 @@ QuadModelSymbolic::QuadModelSymbolic(RobotModel model) {
   hip_offsets_.resize(4);
   T_body_legbases_.resize(4);
 
-  if (model == UNITREE_QUAD) {
-    std::cout << "QuadModelSymbolic initialized with UNITREE_QUAD" << std::endl;
+  if (model == GO2_QUAD) {
+    std::cout << "QuadModelSymbolic initialized with GO2_QUAD" << std::endl;
     base_mass_ = 15.019;
     //    base_inertia_ << 0.228452, 0.00012166, -0.00231383, 0.00012166, 0.515114, -3.12e-05, -0.00231383, -3.12e-05,
     //        0.500952;
@@ -1450,7 +1450,7 @@ QuadModelSymbolic &QuadModelSymbolic::operator=(const ModelInterface &other) {
 QuadModelSymbolic::QuadModelSymbolic()
     :
 #if ROBOT_MODEL == GO2
-      QuadModelSymbolic(UNITREE_QUAD)
+      QuadModelSymbolic(GO2_QUAD)
 #elif ROBOT_MODEL == ULAB
       QuadModelSymbolic(DFKI_QUAD)
 #else

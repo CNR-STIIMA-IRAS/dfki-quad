@@ -12,7 +12,7 @@ class SysIDLegControllerNode : public rclcpp::Node {
   SysIDLegControllerNode()
       : Node("sysid_leg_controller_node"),
         first_quad_state_received_(false),
-        quad_model_(QuadModelSymbolic::UNITREE_QUAD) {
+        quad_model_(QuadModelSymbolic::GO2_QUAD) {
     // parameters
     this->declare_parameter<int>("leg_no", 0);
     this->declare_parameter<double>("max_segments", 1.0);

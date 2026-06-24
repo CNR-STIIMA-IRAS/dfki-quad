@@ -7,7 +7,6 @@ from rclpy import Parameter
 from rclpy.node import Node
 from sensor_msgs.msg import Joy
 from std_srvs.srv import Trigger
-from unitree_go.msg import WirelessController
 
 
 # Simple script, that allows to reconfigure the quads pose using mpc controller with all legs in contact
@@ -30,8 +29,6 @@ class Joy2Target(Node):
 
         # subscribers
         self.joy_sub = self.create_subscription(Joy, "joy", self.joy_sub_callback, 1)
-        self.unitree_joy_sub = self.create_subscription(WirelessController, "wirelesscontroller",
-                                                        self.wireless_controller_sub_callback, 1)
 
         # parameter client
         self.param_client = self.create_client(SetParameters, '/mit_controller_node/set_parameters')
@@ -98,69 +95,6 @@ class Joy2Target(Node):
         self.rt_init = False
 
         self.current_swing_height = 0.05
-
-        # deactivate joystick
-        self.wireless_active = True
-        self.joy_active = True
-
-    def wireless_controller_sub_callback(self, msg):
-        left_js_lr = -msg.lx
-        left_js_ud = msg.ly
-        right_js_lr = -msg.rx
-        right_js_ud = msg.ry
-        button_values = [int(i) for i in np.binary_repr(msg.keys, 16)]
-        upper_js_lr = button_values[2] - button_values[0]
-        upper_js_ud = button_values[3] - button_values[1]
-
-        shift_r = button_values[15]
-        shift_l = button_values[14]
-        alt_r = button_values[11]
-        alt_l = button_values[10]
-        rt = int(alt_r)
-        lt = int(alt_l)
-
-        A = button_values[7]
-        B = button_values[6]
-        X = button_values[5]
-        Y = button_values[4]
-        L = button_values[2]  # in this case upper left instead of left joystick
-        R = button_values[0]  # in this case upper right instead of right joystick
-        start = button_values[13]
-        back = button_values[12]
-
-
-        # detect rising edges
-        A_rising = A and not self.Abef
-        B_rising = B and not self.Bbef
-        X_rising = X and not self.Xbef
-        Y_rising = Y and not self.Ybef
-        Up_rising = button_values[3] and not self.Upref
-        Down_rising = button_values[1] and not self.Downref
-        Left_rising = button_values[0] and not self.Leftref
-        Right_rising = button_values[2] and not self.Rightref
-        start_rising = start and not self.start_ref
-
-
-        # emergency stop
-        if (alt_r or alt_l):
-            req = Trigger.Request()
-            self.emerg_damp_client.call_async(req)
-
-        if left_js_lr or right_js_lr or left_js_ud or right_js_ud:
-            self.joy_active = False
-            self.wireless_active = True
-
-        # only emergency stop active when deactivated
-        if not self.wireless_active:
-            return
-        # deactivate joy msg
-        # self.joy_active = False
-
-        self.send_control_input(left_js_lr, left_js_ud, right_js_lr, right_js_ud, upper_js_lr, upper_js_ud,rt, lt,
-                                shift_r, shift_l, alt_r, alt_l,
-                                A, B, X, Y, L, R,
-                                A_rising, B_rising, X_rising, Y_rising, Up_rising, Down_rising, Left_rising, Right_rising,
-                                start, start_rising)
 
     def joy_sub_callback(self, msg):
         if len(msg.axes) == 6:
@@ -230,13 +164,6 @@ class Joy2Target(Node):
         if (L or R):
             req = Trigger.Request()
             self.emerg_damp_client.call_async(req)
-
-        if left_js_lr or right_js_lr or left_js_ud or right_js_ud:
-            self.joy_active = True
-            self.wireless_active = False
-        # only emergency stop active when deactivated
-        if not self.joy_active:
-            return
 
         self.send_control_input(left_js_lr, left_js_ud, right_js_lr, right_js_ud, upper_js_lr, upper_js_ud,rt, lt,
                                 shift_r, shift_l, alt_r, alt_l,

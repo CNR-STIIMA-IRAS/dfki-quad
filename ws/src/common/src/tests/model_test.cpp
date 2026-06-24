@@ -198,7 +198,7 @@ int main(int argc, char* argv[]) {
   qdd_pin << 0.05, 0.05, 0.05;
   tau_pin << 0.2, 0.2, 0.2;
 
-  QuadModelSymbolic quad_sym(QuadModelSymbolic::UNITREE_QUAD);
+  QuadModelSymbolic quad_sym(QuadModelSymbolic::GO2_QUAD);
 
   // ----------Start Tests-----------
 

@@ -13,19 +13,15 @@ import sys
 def generate_launch_description():
     if "sim:=ulab" in sys.argv[4:]:
         sim = True
-        unitree = False
         config_file = "trajectory_replay_sim.yaml"
-    elif "sim:=go2" in sys.argv[4:] or "sim:=unitree" in sys.argv[4:]:
+    elif "sim:=go2" in sys.argv[4:]:
         sim = True
-        unitree = True
         config_file = "trajectory_replay_sim.yaml"
     elif "real:=ulab" in sys.argv[4:]:
         sim = False
-        unitree = False
         config_file = "trajectory_replay_real.yaml"
-    elif "real:=go2" in sys.argv[4:] or "real:=unitree" in sys.argv[4:]:
+    elif "real:=go2" in sys.argv[4:]:
         sim = False
-        unitree = True
         config_file = "trajectory_replay_real.yaml"
     else:
         print("Please specify param 'sim' or 'real' and robot. E.g. 'sim:=ulab' or 'real:=go2'.")

@@ -12,28 +12,18 @@ def generate_launch_description():
         print("Drivers only for real system!")
         exit()
 
-    elif "sim:=go2" in sys.argv[4:] or "sim:=unitree" in sys.argv[4:]:
+    elif "sim:=go2" in sys.argv[4:]:
         print("Drivers only for real system!")
         exit()
     elif "real:=ulab" in sys.argv[4:]:
         sim = False
-        unitree = False
         config_file_leg_driver = "leg_param_real_ulab.yaml"
         config_file_state_estimation = "state_estimation_ulab.yaml"
         common_config_file = "common_config_ulab.yaml"
         if "onboard:=true" not in sys.argv[5:]:
             config_file_viz = "visualizer_params_ulab.yaml"
-
-    elif "real:=go2" in sys.argv[4:] or "real:=unitree" in sys.argv[4:]:
-        sim = False
-        unitree = True
-        config_file_leg_driver = "leg_param_real_go2.yaml"
-        config_file_state_estimation = "state_estimation_go2_real.yaml"
-        common_config_file = "common_config_go2.yaml"
-        if "onboard:=true" not in sys.argv[5:]:
-            config_file_viz = "visualizer_params_go2.yaml"
     else:
-        print("Please specify param 'sim' or 'real' and robot. E.g. 'sim:=ulab' or 'real:=go2'.")
+        print("Only the ULAB real-hardware launch remains available. Use 'real:=ulab'.")
         exit()
 
     pkg_drivers = get_package_share_directory("drivers")
@@ -63,15 +53,6 @@ def generate_launch_description():
         prefix=["sudo -E env \"LD_LIBRARY_PATH=$LD_LIBRARY_PATH\""],
         shell=True,
         output="screen",
-    )
-    unitree_ros2_motor_driver = Node(
-        package="drivers",
-        name="unitree_ros2_motor_driver",
-        executable="unitree_ros2_motor_driver",
-        parameters=[os.path.join(pkg_drivers, "config", "unitree_go2_param.yaml")],
-        shell=True,
-        output="screen",
-        arguments=['--ros-args', '--log-level', ["unitree_ros2_motor_driver:=", "debug"]]
     )
     # LEG DRIVER
     leg_driver = Node(
@@ -124,18 +105,8 @@ def generate_launch_description():
         parameters=[{'hostname': hostname, 'buffer_size': buffer_size, 'namespace': topic_namespace}]
     )
 
-    if unitree:
-        motor_driver = unitree_ros2_motor_driver
-        if "onboard:=true" not in sys.argv[5:]:
-            return LaunchDescription(
-                [state_estimation, leg_driver, declare_use_sim_time, motor_driver, visualizer, gps_driver,
-                 vicon_driver])
-        else:
-            return LaunchDescription(
-                [state_estimation, leg_driver, declare_use_sim_time, motor_driver, gps_driver])
+    if "onboard:=true" not in sys.argv[5:]:
+        return LaunchDescription(
+            [state_estimation, leg_driver, declare_use_sim_time, visualizer, gps_driver, vicon_driver])
     else:
-        if "onboard:=true" not in sys.argv[5:]:
-            return LaunchDescription(
-                [state_estimation, leg_driver, declare_use_sim_time, visualizer, gps_driver, vicon_driver])
-        else:
-            return LaunchDescription([state_estimation, leg_driver, declare_use_sim_time, gps_driver])
+        return LaunchDescription([state_estimation, leg_driver, declare_use_sim_time, gps_driver])

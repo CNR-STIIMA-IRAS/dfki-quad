@@ -7,10 +7,8 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     if "sim:=ulab" in sys.argv[4:]:
-        unitree = False
         config_file = "simulator_params_ulab.yaml"
-    elif "sim:=go2" in sys.argv[4:] or "sim:=unitree" in sys.argv[4:]:
-        unitree = True
+    elif "sim:=go2" in sys.argv[4:]:
         config_file = "simulator_params_go2.yaml"
     else:
         print("Please specify param 'sim' with robot. E.g. 'sim:=ulab' or 'sim:=go2'.")
@@ -29,4 +27,3 @@ def generate_launch_description():
         output="screen",
     )
     return LaunchDescription([visualizer])
-

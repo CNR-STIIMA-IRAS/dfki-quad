@@ -66,12 +66,6 @@ function(target_ros_dependencies target)
         elseif(dependency STREQUAL "std_srvs")
             target_link_libraries(${target}
                     std_srvs::std_srvs__rosidl_typesupport_cpp)
-        elseif(dependency STREQUAL "unitree_api")
-            target_link_libraries(${target}
-                    unitree_api::unitree_api__rosidl_typesupport_cpp)
-        elseif(dependency STREQUAL "unitree_go")
-            target_link_libraries(${target}
-                    unitree_go::unitree_go__rosidl_typesupport_cpp)
         elseif(TARGET ${dependency}::${dependency})
             target_link_libraries(${target} ${dependency}::${dependency})
         elseif(TARGET ${dependency})

@@ -139,7 +139,7 @@ class QuadModelSymbolic : public ModelInterface {
   Matrix4d T_base_imu_, T_world_base_;
 
  public:
-  enum RobotModel { DFKI_QUAD = 0, UNITREE_QUAD = 1 };
+  enum RobotModel { DFKI_QUAD = 0, GO2_QUAD = 1 };
   QuadModelSymbolic(RobotModel model);
 
 #ifdef ROBOT_MODEL

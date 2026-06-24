@@ -10,11 +10,7 @@ from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
-    if "sim:=ulab" in sys.argv[4:]:
-        unitree = False
-    elif "sim:=go2" in sys.argv[4:] or "sim:=unitree" in sys.argv[4:]:
-        unitree = True
-    else:
+    if "sim:=ulab" not in sys.argv[4:] and "sim:=go2" not in sys.argv[4:]:
         print("Please specify param 'sim' with robot. E.g. 'sim:=ulab' or 'sim:=go2'.")
         exit()
 

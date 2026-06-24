@@ -20,7 +20,7 @@ endforeach()
 find_package(ament_cmake REQUIRED)
 
 install(
-  DIRECTORY config dae launch meshes urdf xacro
+  DIRECTORY dae urdf
   DESTINATION share/${PROJECT_NAME}
 )
 

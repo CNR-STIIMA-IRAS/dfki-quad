@@ -44,7 +44,7 @@ struct ReplayState {
 
 class TrajectoryReplay : public rclcpp::Node {
  public:
-  TrajectoryReplay() : Node("trajectory_replay"), quad_model_(QuadModelSymbolic::UNITREE_QUAD) {
+  TrajectoryReplay() : Node("trajectory_replay"), quad_model_(QuadModelSymbolic::GO2_QUAD) {
     // declare parameters
     this->declare_parameter("csv_name", "");
     this->declare_parameter("update_freq", 400.0);

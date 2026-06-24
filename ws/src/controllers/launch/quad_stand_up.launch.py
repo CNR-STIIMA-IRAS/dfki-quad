@@ -11,19 +11,15 @@ from launch_ros.actions import Node
 def generate_launch_description():
     if "sim:=ulab" in sys.argv[4:]:
         sim = True
-        unitree = False
         config_file = "quad_stand_up_sim_ulab.yaml"
-    elif "sim:=go2" in sys.argv[4:] or "sim:=unitree" in sys.argv[4:]:
+    elif "sim:=go2" in sys.argv[4:]:
         sim = True
-        unitree = True
         config_file = "quad_stand_up_sim_go2.yaml"
     elif "real:=ulab" in sys.argv[4:]:
         sim = False
-        unitree = False
         config_file = "quad_stand_up_real_ulab.yaml"
-    elif "real:=go2" in sys.argv[4:] or "real:=unitree" in sys.argv[4:]:
+    elif "real:=go2" in sys.argv[4:]:
         sim = False
-        unitree = True
         config_file = "quad_stand_up_real_go2.yaml"
     else:
         print("Please specify param 'sim' or 'real' and robot. E.g. 'sim:=ulab' or 'real:=go2'.")
