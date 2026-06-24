@@ -264,7 +264,7 @@ std::array<std::string, ModelInterface::NUM_JOINTS> Go2JointNames() {
 
 std::string Go2UrdfPath() {
   return (std::filesystem::path(__FILE__).parent_path().parent_path().parent_path().parent_path()
-          / "src/common/model/urdf/go2/urdf/go2_description.urdf")
+          / "src/go2_description/urdf/go2_description.urdf")
       .string();
 }
 

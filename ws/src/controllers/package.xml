@@ -29,4 +29,5 @@
   <depend>quad_wbc</depend>
   <depend>quad_model_adaptation</depend>
   <depend>generate_parameter_library</depend>
+  <exec_depend>go2_description</exec_depend>
 </package>

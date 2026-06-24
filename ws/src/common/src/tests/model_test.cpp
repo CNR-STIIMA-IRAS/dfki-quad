@@ -30,7 +30,7 @@ using drake::multibody::Parser;
 using drake::systems::Context;
 using drake::systems::DiagramBuilder;
 
-const std::string URDF_PATH = "./src/common/model/urdf/go2/urdf/go2_description.urdf";
+const std::string URDF_PATH = "./src/go2_description/urdf/go2_description.urdf";
 
 // void Gravity_vector(Eigen::Matrix<double, 3, 1>& gravity_vector, double q1, double q2, double q3) {
 //   double sub0_14_0 = std::cos(q1);

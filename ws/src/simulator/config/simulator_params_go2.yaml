@@ -1,6 +1,6 @@
 drake_simulator:
   ros__parameters:
-    robot_urdf: "package://common/model/urdf/go2/urdf/go2_description.urdf"   # The URDF of the quadruped
+    robot_urdf: "package://go2_description/urdf/go2_description.urdf"   # The URDF of the quadruped
     # world_urdf: "package://common/model/urdf/terrain.urdf"  # The URDF of the world environment
     world_urdf: "package://common/model/urdf/plane.urdf"  # The URDF of the world environment
     world_fix_link: "plane_base_link"               # The base_link name of the world environment

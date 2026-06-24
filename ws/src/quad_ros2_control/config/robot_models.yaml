@@ -1,6 +1,6 @@
 robots:
   go2:
-    simulator_urdf: "package://common/model/urdf/go2/urdf/go2_description.urdf"
+    simulator_urdf: "package://go2_description/urdf/go2_description.urdf"
     controller_description_xacro: "package://quad_ros2_control/urdf/go2_topic_based.ros2_control.xacro"
     controller_manager_config: "package://quad_ros2_control/config/controller_manager_go2.yaml"
     simulator_config: "package://simulator/config/simulator_params_go2.yaml"
