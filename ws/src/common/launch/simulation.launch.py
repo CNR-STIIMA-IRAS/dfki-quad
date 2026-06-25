@@ -10,8 +10,8 @@ from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
-    if "sim:=ulab" not in sys.argv[4:] and "sim:=go2" not in sys.argv[4:]:
-        print("Please specify param 'sim' with robot. E.g. 'sim:=ulab' or 'sim:=go2'.")
+    if "sim:=go2" not in sys.argv[4:]:
+        print("Please specify param 'sim' with robot. E.g. 'sim:=go2'.")
         exit()
 
     # Generate nodes from package launch files

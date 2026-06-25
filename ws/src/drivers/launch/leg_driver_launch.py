@@ -9,24 +9,12 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    if "sim:=ulab" in sys.argv[4:]:
+    if "sim:=go2" in sys.argv[4:]:
         sim = True
         config_file = "leg_param_sim.yaml"
-        common_config_file = "common_config_ulab.yaml"
-    elif "sim:=go2" in sys.argv[4:]:
-        sim = True
-        config_file = "leg_param_sim.yaml"
-        common_config_file = "common_config_go2.yaml"
-    elif "real:=ulab" in sys.argv[4:]:
-        sim = False
-        config_file = "leg_param_real_ulab.yaml"
-        common_config_file = "common_config_ulab.yaml"
-    elif "real:=go2" in sys.argv[4:]:
-        sim = False
-        config_file = "leg_param_real_go2.yaml"
         common_config_file = "common_config_go2.yaml"
     else:
-        print("Please specify param 'sim' or 'real' and robot. E.g. 'sim:=ulab' or 'real:=go2'.")
+        print("Please specify param 'sim' with robot. E.g. 'sim:=go2'.")
         exit()
 
     pkg_drivers = get_package_share_directory("drivers")

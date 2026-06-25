@@ -9,24 +9,12 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    if "sim:=ulab" in sys.argv[4:]:
-        sim = True
-        config_file = "state_estimation_ulab.yaml"
-        common_config_file = "common_config_ulab.yaml"
-    elif "sim:=go2" in sys.argv[4:]:
+    if "sim:=go2" in sys.argv[4:]:
         sim = True
         config_file = "state_estimation_go2_sim.yaml"
         common_config_file = "common_config_go2.yaml"
-    elif "real:=ulab" in sys.argv[4:]:
-        sim = False
-        config_file = "state_estimation_ulab.yaml"
-        common_config_file = "common_config_ulab.yaml"
-    elif "real:=go2" in sys.argv[4:]:
-        sim = False
-        config_file = "state_estimation_go2_real.yaml"
-        common_config_file = "common_config_go2.yaml"
-    else:
-        print("Please specify param 'sim' or 'real' and robot. E.g. 'sim:=ulab' or 'real:=go2'.")
+   else:
+        print("Please specify param 'sim' with robot. E.g. 'sim:=go2'.")
         exit()
 
     # Get the package share directory

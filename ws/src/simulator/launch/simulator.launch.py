@@ -6,12 +6,11 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    if "sim:=ulab" in sys.argv[4:]:
-        config_file = "simulator_params_ulab.yaml"
-    elif "sim:=go2" in sys.argv[4:]:
+    
+    if "sim:=go2" in sys.argv[4:]:
         config_file = "simulator_params_go2.yaml"
     else:
-        print("Please specify param 'sim' with robot. E.g. 'sim:=ulab' or 'sim:=go2'.")
+        print("Please specify param 'sim' with robot. E.g. 'sim:=go2'.")
         exit()
 
     pkg_simulator = get_package_share_directory("simulator")

@@ -8,18 +8,11 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 def generate_launch_description():
-    if "sim:=ulab" in sys.argv[4:]:
-        print("No difference between sim and real here. Use 'real:=ulab' even in simulation.")
-        exit()
-    elif "sim:=go2" in sys.argv[4:]:
+    if "sim:=go2" in sys.argv[4:]:
         print("No difference between sim and real here. Use 'real:=go2' even in simulation.")
         exit()
-    elif "real:=ulab" in sys.argv[4:]:
-        config_file = "sys_id_ulab.yaml"
-    elif "real:=go2" in sys.argv[4:]:
-        config_file = "sys_id_go2.yaml"
     else:
-        print("Please specify param 'sim' or 'real' and robot. E.g. 'sim:=ulab' or 'real:=go2'.")
+        print("Please specify param 'sim' with robot. E.g. 'sim:=go2'.")
         exit()
 
     pkg_controllers = get_package_share_directory("controllers")

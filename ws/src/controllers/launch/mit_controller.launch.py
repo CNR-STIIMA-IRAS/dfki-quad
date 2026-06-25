@@ -79,24 +79,12 @@ def safe_start():
 def generate_launch_description():
     if not "safe_start:=false" in sys.argv[4:]:
         safe_start()
-    if "sim:=ulab" in sys.argv[4:]:
-        sim = True
-        config_file = "mit_controller_sim_ulab.yaml"
-        common_config_file = "common_config_ulab.yaml"
-    elif "sim:=go2" in sys.argv[4:]:
+    if "sim:=go2" in sys.argv[4:]:
         sim = True
         config_file = "mit_controller_sim_go2.yaml"
         common_config_file = "common_config_go2.yaml"
-    elif "real:=ulab" in sys.argv[4:]:
-        sim = False
-        config_file = "mit_controller_real_ulab.yaml"
-        common_config_file = "common_config_ulab.yaml"
-    elif "real:=go2" in sys.argv[4:]:
-        sim = False
-        config_file = "mit_controller_real_go2.yaml"
-        common_config_file = "common_config_go2.yaml"
     else:
-        print("Please specify param 'sim' or 'real' and robot. E.g. 'sim:=ulab' or 'real:=go2'.")
+        print("Please specify param 'sim' with robot. E.g. 'sim:=go2'.")
         exit()
 
     if "mpc_solver:=PARTIAL_CONDENSING_HPIPM" in sys.argv[4:]:

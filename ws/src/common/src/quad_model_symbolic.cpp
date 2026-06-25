@@ -1451,8 +1451,6 @@ QuadModelSymbolic::QuadModelSymbolic()
     :
 #if ROBOT_MODEL == GO2
       QuadModelSymbolic(GO2_QUAD)
-#elif ROBOT_MODEL == ULAB
-      QuadModelSymbolic(DFKI_QUAD)
 #else
 #error WRONG ROBOT_MODEL specified
 #endif

@@ -8,13 +8,3 @@ robots:
     mit_controller_config: "package://controllers/config/mit_controller_sim_go2.yaml"
     joint_commands_topic: "/joint_cmd"
     joint_states_topic: "/joint_states"
-
-  ulab:
-    simulator_urdf: "package://common/model/urdf/quad.urdf"
-    controller_description_xacro: ""
-    controller_manager_config: ""
-    simulator_config: "package://simulator/config/simulator_params_ulab.yaml"
-    common_config: "package://common/config/common_config_ulab.yaml"
-    mit_controller_config: "package://controllers/config/mit_controller_sim_ulab.yaml"
-    joint_commands_topic: "/joint_cmd"
-    joint_states_topic: "/joint_states"

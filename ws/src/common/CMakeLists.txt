@@ -63,15 +63,7 @@ if (NOT WITHOUT_DRAKE)
 endif ()
 add_library(quad_model_symbolic src/quad_state.cpp src/quad_model_symbolic.cpp)
 add_library(quad_model_pino src/quad_model_pino.cpp src/quad_state.cpp)
-if (ROBOT_NAME STREQUAL "ulab")
-    target_compile_definitions(quad_model_symbolic PUBLIC ROBOT_MODEL=ULAB)
-    message(STATUS "Building for ulab quad")
-elseif (ROBOT_NAME STREQUAL "go2")
-    target_compile_definitions(quad_model_symbolic PUBLIC ROBOT_MODEL=GO2)
-    message(STATUS "Building for go2 quad")
-else ()
-    message(STATUS "No ROBOT_NAME selected; quad_model_symbolic default constructor will be unavailable")
-endif ()
+
 if (NOT WITHOUT_DRAKE)
     target_link_libraries(quad_model PUBLIC
             drake::drake
